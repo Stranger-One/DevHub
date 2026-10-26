@@ -11,6 +11,7 @@ beforeAll(async () => {
 
   // Point the existing database connector at the temporary database.
   process.env.MONGODB_URI = mongoServer.getUri("devhub_test");
+  process.env.ACCESS_TOKEN_SECRET = "a".repeat(32); // Ensure a valid secret for testing
 
   await connectDatabase();
 

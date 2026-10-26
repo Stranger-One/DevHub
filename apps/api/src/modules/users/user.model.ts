@@ -1,6 +1,28 @@
-import { InferSchemaType, model, Schema } from "mongoose";
+import { HydratedDocument, InferSchemaType, model, Schema } from "mongoose";
 
 export type UserRole = "DEVELOPER" | "CLIENT";
+
+export interface IUser {
+  username: string;
+  email: string;
+  passwordHash: string;
+  role: UserRole;
+  isEmailVerified: boolean;
+  profile: {
+    displayName?: string;
+    bio?: string;
+    avatarUrl?: string;
+    location?: string;
+    skills?: string[];
+    website?: string;
+    githubUrl?: string;
+    linkedinUrl?: string;
+  };
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type UserDocument = HydratedDocument<IUser>;
 
 const userSchema = new Schema(
   {
@@ -34,7 +56,7 @@ const userSchema = new Schema(
       required: true,
     },
 
-    emailVerified: {
+    isEmailVerified: {
       type: Boolean,
       default: false,
     },
@@ -79,7 +101,6 @@ const userSchema = new Schema(
   },
   {
     timestamps: true,
-    versionKey: false,
   },
 );
 
@@ -91,6 +112,4 @@ userSchema.index(
   { unique: true, name: "uniq_users_username" },
 );
 
-export type User = InferSchemaType<typeof userSchema>;
-
-export const UserModel = model("User", userSchema);
+export const UserModel = model<IUser>("User", userSchema);

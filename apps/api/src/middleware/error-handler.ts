@@ -1,5 +1,6 @@
 import type { ErrorRequestHandler } from "express";
 import { ZodError } from "zod";
+import { AuthError } from "../modules/users/user.service.js";
 
 export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
   if (error instanceof ZodError) {
@@ -10,6 +11,14 @@ export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
         field: issue.path.join("."),
         message: issue.message,
       })),
+    });
+    return;
+  }
+
+  if (error instanceof AuthError) {
+    res.status(error.statusCode).json({
+      success: false,
+      message: error.message,
     });
     return;
   }
