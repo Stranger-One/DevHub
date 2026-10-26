@@ -11,7 +11,7 @@ export async function connectDatabase() {
     console.error("MongoDB connection error:", error.message);
   });
   mongoose.connection.on("disconnected", () => {
-    console.warn("MongoDB connection lost");
+    console.warn("MongoDB disconnected");
   });
 
   await mongoose.connect(uri, {

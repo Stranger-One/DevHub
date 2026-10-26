@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import { errorHandler } from "./middleware/error-handler.js";
+import userRouter from "./modules/users/user.routes.js";
 
 const app: Express = express();
 
@@ -20,7 +21,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 
-app.use(errorHandler);
 
 app.get("/api/v1/health", (_req, res) => {
   res.status(200).json({
@@ -29,6 +29,9 @@ app.get("/api/v1/health", (_req, res) => {
   });
 });
 
+app.use("/api/auth", userRouter);
 
+
+app.use(errorHandler);
 
 export default app;
