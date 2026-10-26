@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.*
+
+# Environment files and local secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Next.js
+apps/web/.next/
+apps/web/out/
+.vercel/
+
+# Build and test output
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Logs and runtime files
+*.log
+logs/
+*.pid
+*.pid.lock
+
+# Local caches
+.cache/
+.turbo/
+.eslintcache
+
+# Local databases and uploaded files
+*.sqlite
+*.sqlite3
+*.db
+uploads/
+
+# Operating system and editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/*.code-snippets
+.env.example
+apps/api/.env
+apps/api/.env
+apps/api/.env
+apps/api/.env
+apps/api/.env
