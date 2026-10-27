@@ -1,8 +1,13 @@
-import { createAccessToken, createRefreshToken, createTokenFamilyId, getRefreshExpiry, hashRefreshToken } from "./auth.tokens.js";
+import {
+  createAccessToken,
+  createRefreshToken,
+  createTokenFamilyId,
+  getRefreshExpiry,
+  hashRefreshToken,
+} from "./auth.tokens.js";
 import { RefreshSession } from "./session.model.js";
 import { UserModel, type UserDocument } from "./user.model.js";
 import { AuthError } from "./user.service.js";
-
 
 export async function createSession(user: UserDocument) {
   const familyId = createTokenFamilyId();
@@ -20,17 +25,15 @@ export async function createSession(user: UserDocument) {
       status: "active",
       expiresAt: getRefreshExpiry(),
     });
-  
+
     return {
       accessToken,
       refreshToken,
       expiresAt: session.expiresAt,
     };
-
   } catch (error) {
     throw new AuthError("Failed to create session", 500);
   }
-
 }
 
 export async function rotateRefreshToken(presentedToken: string) {
@@ -86,7 +89,7 @@ export async function rotateRefreshToken(presentedToken: string) {
 
   const refreshToken = createRefreshToken();
 
-  await RefreshSession.create({
+  const session = await RefreshSession.create({
     userId: user._id,
     familyId: current.familyId,
     tokenHash: hashRefreshToken(refreshToken),
@@ -94,12 +97,15 @@ export async function rotateRefreshToken(presentedToken: string) {
     expiresAt: getRefreshExpiry(),
   });
 
+  const accessToken = createAccessToken({
+    sub: user._id.toString(),
+    role: user.role,
+  });
+
   return {
-    accessToken: createAccessToken({
-      sub: user._id.toString(),
-      role: user.role,
-    }),
+    accessToken,
     refreshToken,
+    expiresAt: session.expiresAt,
   };
 }
 
