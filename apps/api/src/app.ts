@@ -22,7 +22,7 @@ app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 
 
-app.get("/api/v1/health", (_req, res) => {
+app.get("/api/health", (_req, res) => {
   res.status(200).json({
     status: "ok",
     service: "devhub-api",
