@@ -21,7 +21,7 @@ const highlights = [
 export function HomePage() {
   return (
     <div className="overflow-hidden bg-background text-text-primary">
-      <section className="relative mx-auto grid max-w-[1160px] gap-16 px-6 pb-20 pt-16 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:px-8 lg:pb-28 lg:pt-24 before:absolute before:inset-x-0 before:top-0 before:-z-0 before:h-[480px] before:bg-[radial-gradient(ellipse_at_50%_0%,rgba(112,40,190,0.2),transparent_65%)] before:content-['']">
+      <section className="relative mx-auto grid max-w-330 gap-16 px-6 pb-20 pt-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:px-8 lg:pb-28 lg:pt-14 before:absolute before:inset-x-0 before:top-0 before:z-0 before:h-120 before:bg-[radial-gradient(ellipse_at_50%_0%,rgba(112,40,190,0.2),transparent_65%)] before:content-['']">
         <div className="relative z-10">
           <div className="mb-6 flex items-center gap-2 text-[0.6875rem] font-bold tracking-[0.16em] text-accent-purple">
             <span className="size-2 rounded-full bg-accent-emerald shadow-[0_0_12px_rgba(0,214,160,0.7)]" />{" "}

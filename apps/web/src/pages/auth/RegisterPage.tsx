@@ -1,9 +1,26 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import type { UserRole } from "../../types/auth.types";
+import { Eye, EyeOff } from "lucide-react";
+
 
 export function RegisterPage() {
-  const [role, setRole] = useState<UserRole>("developer");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (password !== confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+    alert(
+      `Register form submitted with email: ${email} and password: ${password}. Connect to the backend next.`,
+    );
+  };
+
   return (
     <>
       <span className="text-[0.6875rem] font-bold tracking-[0.16em] text-accent-purple">
@@ -15,70 +32,8 @@ export function RegisterPage() {
       <p className="mt-2 text-sm text-text-secondary">
         First, tell us how you want to use DevHub.
       </p>
-      <div
-        className="mt-8 grid gap-3 sm:grid-cols-2"
-        role="radiogroup"
-        aria-label="Account type"
-      >
-        <button
-          type="button"
-          className={
-            role === "developer"
-              ? "rounded-[10px] border border-primary bg-primary-soft p-4 text-left"
-              : "rounded-[10px] border border-border bg-surface-raised p-4 text-left hover:border-border-strong"
-          }
-          onClick={() => setRole("developer")}
-          aria-pressed={role === "developer"}
-        >
-          <span className="mb-4 grid size-8 place-items-center rounded-lg bg-primary/20 text-accent-purple">
-            ⌘
-          </span>
-          <strong className="block text-sm">I'm a developer</strong>
-          <span className="mt-1 block text-xs leading-5 text-text-muted">
-            Build projects and find opportunities.
-          </span>
-        </button>
-        <button
-          type="button"
-          className={
-            role === "client"
-              ? "rounded-[10px] border border-primary bg-primary-soft p-4 text-left"
-              : "rounded-[10px] border border-border bg-surface-raised p-4 text-left hover:border-border-strong"
-          }
-          onClick={() => setRole("client")}
-          aria-pressed={role === "client"}
-        >
-          <span className="mb-4 grid size-8 place-items-center rounded-lg bg-accent-cyan/10 text-accent-cyan">
-            ↗
-          </span>
-          <strong className="block text-sm">I'm a client</strong>
-          <span className="mt-1 block text-xs leading-5 text-text-muted">
-            Find talent and bring ideas to life.
-          </span>
-        </button>
-      </div>
-      <form
-        className="mt-6 flex flex-col gap-5"
-        onSubmit={(event) => {
-          event.preventDefault();
-          alert(
-            `Registration UI only. Selected role: ${role}. Connect to the backend next.`,
-          );
-        }}
-      >
-        <input type="hidden" name="role" value={role} />
-        <label className="flex flex-col gap-2 text-sm font-medium text-text-secondary">
-          Username
-          <input
-            name="username"
-            autoComplete="username"
-            placeholder="your_username"
-            minLength={3}
-            maxLength={30}
-            className="rounded-[10px] border border-border bg-surface-raised px-3.5 py-3 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20"
-            required
-          />
-        </label>
+
+      <form className="mt-6 flex flex-col gap-5" onSubmit={handleSubmit}>
         <label className="flex flex-col gap-2 text-sm font-medium text-text-secondary">
           Email
           <input
@@ -86,27 +41,69 @@ export function RegisterPage() {
             name="email"
             autoComplete="email"
             placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="rounded-[10px] border border-border bg-surface-raised px-3.5 py-3 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20"
             required
           />
         </label>
         <label className="flex flex-col gap-2 text-sm font-medium text-text-secondary">
           Password
-          <input
-            type="password"
-            name="password"
-            autoComplete="new-password"
-            minLength={8}
-            placeholder="At least 8 characters"
-            className="rounded-[10px] border border-border bg-surface-raised px-3.5 py-3 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20"
-            required
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              autoComplete="new-password"
+              minLength={8}
+              placeholder="At least 8 characters"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-[10px] border border-border bg-surface-raised px-3.5 py-3 pr-16 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20"
+              required
+            />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-3 cursor-pointer text-xs font-semibold text-accent-purple hover:text-primary-hover"
+              onClick={() => setShowPassword((isVisible) => !isVisible)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff /> : <Eye />}
+            </button>
+          </div>
+        </label>
+        <label className="flex flex-col gap-2 text-sm font-medium text-text-secondary">
+          Confirm Password
+          <div className="relative">
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              name="confirm-password"
+              autoComplete="new-password"
+              minLength={8}
+              placeholder="Confirm your password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full rounded-[10px] border border-border bg-surface-raised px-3.5 py-3 pr-16 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20"
+              required
+            />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-3 cursor-pointer text-xs font-semibold text-accent-purple hover:text-primary-hover"
+              onClick={() => setShowConfirmPassword((isVisible) => !isVisible)}
+              aria-label={
+                showConfirmPassword
+                  ? "Hide confirmed password"
+                  : "Show confirmed password"
+              }
+            >
+              {showConfirmPassword ? <EyeOff /> : <Eye />}
+            </button>
+          </div>
         </label>
         <button
           className="w-full rounded-[10px] bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primary-hover"
           type="submit"
         >
-          Create {role} account
+          Create account
         </button>
       </form>
       <p className="mt-6 text-center text-sm text-text-secondary">
@@ -117,10 +114,6 @@ export function RegisterPage() {
         >
           Log in
         </Link>
-      </p>
-      <p className="mt-6 text-xs leading-5 text-text-muted">
-        The server must validate the role and all submitted fields. Never trust
-        the selected role from the browser.
       </p>
     </>
   );

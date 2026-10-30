@@ -1,6 +1,9 @@
+import { Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 export function LoginPage() {
+  const [showPassword, setShowPassword] = useState(false);
   const location = useLocation();
   const from = (location.state as { from?: { pathname?: string } } | null)?.from
     ?.pathname;
@@ -35,14 +38,24 @@ export function LoginPage() {
         </label>
         <label className="flex flex-col gap-2 text-sm font-medium text-text-secondary">
           Password
-          <input
-            type="password"
-            name="password"
-            placeholder="Your password"
-            autoComplete="current-password"
-            className="rounded-[10px] border border-border bg-surface-raised px-3.5 py-3 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20"
-            required
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              placeholder="Your password"
+              autoComplete="current-password"
+              className="w-full rounded-[10px] border border-border bg-surface-raised px-3.5 py-3 pr-16 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20"
+              required
+            />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-3 cursor-pointer text-xs font-semibold text-accent-purple hover:text-primary-hover"
+              onClick={() => setShowPassword((isVisible) => !isVisible)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff /> : <Eye />}
+            </button>
+          </div>
         </label>
         <div className="flex justify-end text-sm">
           <Link
@@ -68,10 +81,6 @@ export function LoginPage() {
         >
           Create an account
         </Link>
-      </p>
-      <p className="mt-6 text-xs leading-5 text-text-muted">
-        Authentication UI only. Wire this form to the Express API before
-        production.
       </p>
     </>
   );
