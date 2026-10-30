@@ -19,8 +19,6 @@ export const register = async (
   try {
     const body = req.body
 
-    console.log("Request Body: ", body)
-
     await registerWithEmail(body);
 
     res.status(201).json({

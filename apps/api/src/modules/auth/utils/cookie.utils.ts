@@ -23,7 +23,7 @@ const accessCookieOptions: CookieOptions = {
 
 const refreshCookieOptions: CookieOptions = {
   ...cookieBaseOptions,
-  path: "/api/auth",
+  path: "/api/v1/auth",
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
