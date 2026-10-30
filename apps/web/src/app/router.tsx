@@ -1,13 +1,13 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { PublicLayout } from "../layouts/PublicLayout";
 import { AuthLayout } from "../layouts/AuthLayout";
-import { ProtectedRoute } from "../features/auth/ProtectedRoute";
-import { GuestRoute } from "../features/auth/GuestRoute";
+import { ProtectedRoute } from "../routes/ProtectedRoute";
 import { HomePage } from "../pages/public/HomePage";
 import { PlaceholderPage } from "../pages/public/PlaceholderPage";
 import { LoginPage } from "../pages/auth/LoginPage";
 import { RegisterPage } from "../pages/auth/RegisterPage";
 import { ForgotPasswordPage } from "../pages/auth/ForgotPasswordPage";
+import VarifyEmailPage from "../pages/auth/VarifyEmailPage";
 import { OnboardingPage } from "../pages/shared/OnboardingPage";
 import { SettingsPage } from "../pages/shared/SettingsPage";
 import { MessagesPage } from "../pages/shared/MessagesPage";
@@ -16,6 +16,7 @@ import { DeveloperRoutes } from "../pages/developer/DeveloperRoutes";
 import { ClientRoutes } from "../pages/client/ClientRoutes";
 import { NotFoundPage } from "../pages/system/NotFoundPage";
 import type { ReactNode } from "react";
+import { GuestRoute } from "../routes/GuestRoute";
 
 function Page({ title }: { title: string }) {
   return <PlaceholderPage title={title} />;
@@ -112,6 +113,7 @@ export function AppRouter() {
           <Route path="/auth" element={<AuthLayout />}>
             <Route path="login" element={<LoginPage />} />
             <Route path="register" element={<RegisterPage />} />
+            <Route path="verify-email" element={<VarifyEmailPage />} />
             <Route path="forgot-password" element={<ForgotPasswordPage />} />
           </Route>
         </Route>

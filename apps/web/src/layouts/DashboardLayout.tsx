@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet } from "react-router-dom";
-import { useAppSelector } from "../redux/hooks";
+import { useAppSelector } from "../app/hooks";
 
 export function DashboardLayout() {
   const user = useAppSelector((state) => state.auth.user);

@@ -25,8 +25,8 @@ const clientUser: AuthUser = {
 };
 
 const initialState: AuthState = {
-  user: clientUser,
-  status: "authenticated",
+  user: null,
+  status: "unauthenticated",
 };
 
 const authSlice = createSlice({
