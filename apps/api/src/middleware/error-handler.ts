@@ -18,6 +18,7 @@ export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
   if (error instanceof AuthServiceError) {
     res.status(error.statusCode).json({
       success: false,
+      code: "AUTH_SERVICE_ERROR",
       message: error.message,
     });
     return;

@@ -17,23 +17,11 @@ export const register = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const parsed = registerSchema.safeParse(req.body);
+    const body = req.body
 
-    console.log("Parsed", parsed);
+    console.log("Request Body: ", body)
 
-    if (!parsed.success) {
-      res.status(400).json({
-        success: false,
-        message: "Validation failed",
-        errors: parsed.error.issues.map((issue: any) => ({
-          field: issue.path.join("."),
-          message: issue.message,
-        })),
-      });
-      return;
-    }
-
-    await registerWithEmail(parsed.data);
+    await registerWithEmail(body);
 
     res.status(201).json({
       success: true,
@@ -50,18 +38,9 @@ export const resendRegistrationOtp = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const parsed = resendRegistrationOtpSchema.safeParse(req.body);
+    const body = req.body;
 
-    if (!parsed.success) {
-      res.status(400).json({
-        success: false,
-        message: "Validation failed",
-        errors: parsed.error.flatten(),
-      });
-      return;
-    }
-
-    await resendRegistrationOTP(parsed.data.email);
+    await resendRegistrationOTP(body.email);
 
     res.status(200).json({
       success: true,
@@ -78,18 +57,9 @@ export const completeRegistration = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const parsed = completeRegistrationSchema.safeParse(req.body);
+    const body = req.body;
 
-    if (!parsed.success) {
-      res.status(400).json({
-        success: false,
-        message: "Validation failed",
-        errors: parsed.error.flatten(),
-      });
-      return;
-    }
-
-    const result = await completeEmailRegistration(parsed.data, {
+    const result = await completeEmailRegistration(body, {
       ip: req.ip,
       userAgent: req.get("user-agent"),
     });
