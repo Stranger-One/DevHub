@@ -1,28 +1,30 @@
-import { HydratedDocument, InferSchemaType, model, Schema } from "mongoose";
+import { InferSchemaType, model, Schema } from "mongoose";
 
-export type UserRole = "DEVELOPER" | "CLIENT";
+export const USER_ROLES = ["developer", "client"] as const;
 
-export interface IUser {
-  username: string;
-  email: string;
-  passwordHash: string;
-  role: UserRole;
-  isEmailVerified: boolean;
-  profile: {
-    displayName?: string;
-    bio?: string;
-    avatarUrl?: string;
-    location?: string;
-    skills?: string[];
-    website?: string;
-    githubUrl?: string;
-    linkedinUrl?: string;
-  };
-  createdAt: Date;
-  updatedAt: Date;
-}
+export type UserRole = (typeof USER_ROLES)[number];
 
-export type UserDocument = HydratedDocument<IUser>;
+export const SOCIAL_PROVIDERS = ["google", "github"] as const;
+
+export type SocialProvider = (typeof SOCIAL_PROVIDERS)[number];
+
+// Connected OAuth identities
+const authProviderSchema = new Schema(
+  {
+    provider: {
+      type: String,
+      enum: SOCIAL_PROVIDERS,
+      required: true,
+    },
+
+    providerId: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+  },
+  { _id: false },
+);
 
 const userSchema = new Schema(
   {
@@ -44,7 +46,7 @@ const userSchema = new Schema(
       match: /^[a-z0-9_]+$/,
     },
 
-    // Optional to support accounts that authenticate through OAuth later.
+    // Optional for social-only accounts.
     passwordHash: {
       type: String,
       select: false,
@@ -52,13 +54,18 @@ const userSchema = new Schema(
 
     role: {
       type: String,
-      enum: ["DEVELOPER", "CLIENT"],
+      enum: USER_ROLES,
       required: true,
     },
 
-    isEmailVerified: {
+    emailVerified: {
       type: Boolean,
       default: false,
+    },
+
+    authProviders: {
+      type: [authProviderSchema],
+      default: [],
     },
 
     profile: {
@@ -67,32 +74,39 @@ const userSchema = new Schema(
         trim: true,
         maxlength: 80,
       },
+
       bio: {
         type: String,
         trim: true,
         maxlength: 500,
       },
+
       avatarUrl: {
         type: String,
         trim: true,
       },
+
       location: {
         type: String,
         trim: true,
         maxlength: 100,
       },
+
       skills: {
         type: [String],
         default: [],
       },
+
       website: {
         type: String,
         trim: true,
       },
+
       githubUrl: {
         type: String,
         trim: true,
       },
+
       linkedinUrl: {
         type: String,
         trim: true,
@@ -101,15 +115,44 @@ const userSchema = new Schema(
   },
   {
     timestamps: true,
+    versionKey: false,
   },
 );
 
-// MongoDB enforces uniqueness, including when requests arrive concurrently.
-userSchema.index({ email: 1 }, { unique: true, name: "uniq_users_email" });
-
+// Unique normalized email
 userSchema.index(
-  { username: 1 },
-  { unique: true, name: "uniq_users_username" },
+  { email: 1 },
+  {
+    unique: true,
+    name: "uniq_users_email",
+  },
 );
 
-export const UserModel = model<IUser>("User", userSchema);
+// Unique username
+userSchema.index(
+  { username: 1 },
+  {
+    unique: true,
+    name: "uniq_users_username",
+  },
+);
+
+// Prevent the same OAuth identity from being linked
+// to multiple user accounts.
+userSchema.index(
+  {
+    "authProviders.provider": 1,
+    "authProviders.providerId": 1,
+  },
+  {
+    unique: true,
+    name: "uniq_user_oauth_identity",
+    partialFilterExpression: {
+      "authProviders.providerId": { $type: "string" },
+    },
+  },
+);
+
+export type User = InferSchemaType<typeof userSchema>;
+
+export const UserModel = model("User", userSchema);

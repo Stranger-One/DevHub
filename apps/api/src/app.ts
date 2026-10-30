@@ -3,7 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import { errorHandler } from "./middleware/error-handler.js";
-import userRouter from "./modules/users/user.routes.js";
+import authRouter from "./modules/auth/auth.routes.js";
 
 const app: Express = express();
 
@@ -29,8 +29,8 @@ app.get("/api/health", (_req, res) => {
   });
 });
 
-app.use("/api/auth", userRouter);
-
+// Mount authentication routes
+app.use("/api/v1/auth", authRouter);
 
 app.use(errorHandler);
 
