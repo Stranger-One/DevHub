@@ -40,7 +40,7 @@ export function ForgotPasswordPage() {
       <p className="mt-6 text-center text-sm">
         <Link
           className="font-semibold text-accent-purple hover:text-primary-hover"
-          to="/login"
+          to="/auth/login"
         >
           ← Back to log in
         </Link>

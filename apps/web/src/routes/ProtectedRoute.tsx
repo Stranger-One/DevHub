@@ -13,7 +13,7 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
 
   if (status === "checking") return <LoadingScreen label="Checking access…" />;
   if (status !== "authenticated" || !user) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    return <Navigate to="/auth/login" replace state={{ from: location }} />;
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
