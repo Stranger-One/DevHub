@@ -17,6 +17,7 @@ import { ClientRoutes } from "../pages/client/ClientRoutes";
 import { NotFoundPage } from "../pages/system/NotFoundPage";
 import type { ReactNode } from "react";
 import { GuestRoute } from "../routes/GuestRoute";
+import { Toaster } from "react-hot-toast";
 
 function Page({ title }: { title: string }) {
   return <PlaceholderPage title={title} />;
@@ -145,6 +146,13 @@ export function AppRouter() {
           }
         />
       </Routes>
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+        toastOptions={{
+          duration: 3000,
+        }}
+      />
     </BrowserRouter>
   );
 }

@@ -4,7 +4,6 @@ export interface UserProfile {
   displayName?: string;
   bio?: string;
   avatarUrl?: string;
-  username?: string;
 }
 
 export interface AuthUser {

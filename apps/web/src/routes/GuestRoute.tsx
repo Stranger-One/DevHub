@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { LoadingScreen } from "../../components/feedback/LoadingScreen";
-import { useAppSelector } from "../../app/hooks";
+import { useAppSelector } from "../app/hooks";
+import { LoadingScreen } from "../components/feedback/LoadingScreen";
 
 export function GuestRoute() {
   const { user, status } = useAppSelector((state) => state.auth);

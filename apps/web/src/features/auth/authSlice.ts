@@ -8,21 +8,21 @@ interface AuthState {
   status: AuthStatus;
 }
 
-const developerUser: AuthUser = {
-  id: "1234567890",
-  email: "developer@example.com",
-  username: "developer",
-  role: "developer",
-  emailVerified: true,
-};
+// const developerUser: AuthUser = {
+//   id: "1234567890",
+//   email: "developer@example.com",
+//   username: "developer",
+//   role: "developer",
+//   emailVerified: true,
+// };
 
-const clientUser: AuthUser = {
-  id: "0987654321",
-  email: "client@example.com",
-  username: "client",
-  role: "client",
-  emailVerified: true,
-};
+// const clientUser: AuthUser = {
+//   id: "0987654321",
+//   email: "client@example.com",
+//   username: "client",
+//   role: "client",
+//   emailVerified: true,
+// };
 
 const initialState: AuthState = {
   user: null,

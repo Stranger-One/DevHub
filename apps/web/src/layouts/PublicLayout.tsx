@@ -72,7 +72,7 @@ export function PublicLayout() {
       <main>
         <Outlet />
       </main>
-      <footer className="mx-auto flex max-w-[1160px] flex-col gap-3 border-t border-border px-6 py-6 text-xs text-text-muted sm:flex-row sm:items-center sm:justify-between lg:px-8">
+      <footer className="mx-auto flex max-w-330 flex-col gap-3 border-t border-border px-6 py-6 text-xs text-text-muted sm:flex-row sm:items-center sm:justify-between lg:px-8">
         <span>© {new Date().getFullYear()} DevHub</span>
         <span>Build together. Grow together.</span>
         <div className="flex gap-4">

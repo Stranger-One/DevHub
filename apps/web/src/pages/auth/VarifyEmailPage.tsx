@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import type { UserRole } from "../../types/auth.types";
 
 const VarifyEmailPage = () => {
