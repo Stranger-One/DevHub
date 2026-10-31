@@ -13,6 +13,7 @@ import {
   clearAuthCookies,
   getRefreshTokenFromCookies,
 } from "../utils/cookie.utils.js";
+import { ApiError } from "../../../errors/api-error.js";
 
 export const login = async (
   req: Request,
@@ -58,17 +59,19 @@ export const refresh = async (
 
     if (!refreshToken) {
       clearAuthCookies(res);
-
-      res.status(401).json({
-        success: false,
-        message: "Refresh token not found",
-      });
+      next(
+        new ApiError("Refresh token not found", 401, {
+          code: "AUTH_REFRESH_TOKEN_MISSING",
+        }),
+      );
       return;
     }
 
     const tokens = await refreshSession(refreshToken);
 
     setAuthCookies(res, tokens);
+
+    console.log("/auth/refresh called, new tokens set in cookies");
 
     res.status(200).json({
       success: true,

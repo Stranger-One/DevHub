@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
-
+import { Link, useNavigate } from "react-router-dom";
+import { Eye, EyeOff, LoaderCircle } from "lucide-react";
+import { toast } from "sonner";
+import axiosInstance from "../../services/api/axiosInstance";
+import type { ApiResponse } from "../../types/api.types";
 
 export function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -10,15 +12,31 @@ export function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (password !== confirmPassword) {
-      alert("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
-    alert(
-      `Register form submitted with email: ${email} and password: ${password}. Connect to the backend next.`,
-    );
+    try {
+      setLoading(true);
+      const response = await axiosInstance.post<
+        ApiResponse<{ user: { id: string } }>
+      >("/auth/register", { email, password });
+      if (response.data.success) {
+        navigate(`/auth/verify-email/${response.data.data.user.id}`);
+        toast.success("Registration successful!", {
+          description: "Please check your email for the verification code.",
+        });
+      }
+    } catch {
+      // Axios interceptor displays the normalized API error toast.
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -100,10 +118,15 @@ export function RegisterPage() {
           </div>
         </label>
         <button
-          className="w-full rounded-[10px] bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primary-hover"
+          disabled={loading}
+          className={`w-full rounded-[10px] bg-primary px-5 py-3 text-sm font-semibold  cursor-pointer text-white hover:bg-primary-hover ${loading ? "cursor-not-allowed opacity-70" : ""}`}
           type="submit"
         >
-          Create account
+          {loading ? (
+            <LoaderCircle className="animate-spin mx-auto" />
+          ) : (
+            "Create Account"
+          )}
         </button>
       </form>
       <p className="mt-6 text-center text-sm text-text-secondary">

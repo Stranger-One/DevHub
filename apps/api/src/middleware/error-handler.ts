@@ -1,33 +1,32 @@
 import type { ErrorRequestHandler } from "express";
 import { ZodError } from "zod";
-import { AuthServiceError } from "../modules/auth/services/registration.service.js";
+import { ApiError } from "../errors/api-error.js";
 
 export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
   if (error instanceof ZodError) {
-    res.status(400).json({
-      success: false,
-      message: "Validation failed",
+    error = new ApiError("Validation failed", 400, {
+      code: "VALIDATION_ERROR",
+      description: "One or more fields are invalid.",
       errors: error.issues.map((issue) => ({
         field: issue.path.join("."),
         message: issue.message,
       })),
     });
-    return;
   }
 
-  if (error instanceof AuthServiceError) {
-    res.status(error.statusCode).json({
-      success: false,
-      code: "AUTH_SERVICE_ERROR",
-      message: error.message,
+  if (!(error instanceof ApiError)) {
+    console.error("Unexpected API error:", error);
+    error = new ApiError("Internal server error", 500, {
+      code: "INTERNAL_SERVER_ERROR",
+      description: "An unexpected error occurred.",
     });
-    return;
   }
 
-  console.error("Unexpected API error:", error);
-
-  res.status(500).json({
-    success: false,
-    message: "Internal server error",
+  res.status(error.statusCode).json({
+    success: error.success,
+    message: error.message,
+    description: error.description,
+    code: error.code,
+    errors: error.errors,
   });
 };

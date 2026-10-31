@@ -27,7 +27,7 @@ export const registerSchema = z.object({
 });
 
 export const completeRegistrationSchema = z.object({
-  email: emailSchema,
+  id: z.string().min(1, "User ID is required"),
   otp: otpSchema,
   username: z
     .string()
@@ -40,7 +40,7 @@ export const completeRegistrationSchema = z.object({
 });
 
 export const resendRegistrationOtpSchema = z.object({
-  email: emailSchema,
+  id: z.string().min(1, "User ID is required"),
 });
 
 export const loginSchema = z.object({

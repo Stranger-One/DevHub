@@ -1,8 +1,89 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { UserRole } from "../../types/auth.types";
+import { useAppDispatch } from "../../app/hooks";
+import { LoaderCircle } from "lucide-react";
+import { useParams } from "react-router-dom";
+import { verifyEmail } from "../../features/auth/authThunk";
+import { toast } from "sonner";
+import axiosInstance from "../../services/api/axiosInstance";
 
 const VarifyEmailPage = () => {
   const [role, setRole] = useState<UserRole>("developer");
+  const [username, setUsername] = useState<string>("");
+  const [otp, setOtp] = useState<string>("");
+  const { id } = useParams<{ id: string }>();
+
+  const [loading, setLoading] = useState<boolean>(false);
+  const [resendCodeLoading, setResendCodeLoading] = useState(false);
+
+  const [countDown, setCountDown] = useState(60);
+
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    if (countDown === 0) return;
+
+    const timeout = window.setTimeout(() => {
+      setCountDown((previous) => Math.max(previous - 1, 0));
+    }, 1000);
+
+    return () => window.clearTimeout(timeout);
+  }, [countDown]);
+
+  const handleResendCode = async () => {
+    if (!id) {
+      toast.error("Missing Field", {
+        description: "User ID is missing. Please go back and try again.",
+      });
+      return;
+    }
+
+    try {
+      setResendCodeLoading(true);
+      const response = await axiosInstance.post("/auth/register/resend-otp", {
+        id,
+      });
+
+      if (response.data.success) {
+        setCountDown(60);
+        toast.success("Verification code resent!", {
+          description: "Please check your email for the new verification code.",
+        });
+      }
+    } catch {
+    } finally {
+      setResendCodeLoading(false);
+    }
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = {
+      id: id || "",
+      role,
+      username,
+      otp,
+    };
+
+    if (!id) {
+      toast.error("Missing Field", {
+        description: "User ID is missing. Please go back and try again.",
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await dispatch(verifyEmail(formData)).unwrap();
+      toast.success("Email verified successfully!", {
+        description: "Your DevHub account is ready.",
+      });
+    } catch {
+      // The API interceptor displays the normalized error toast.
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -15,15 +96,7 @@ const VarifyEmailPage = () => {
       <p className="mt-2 text-sm text-text-secondary">
         Enter your account details and the code we sent to your email.
       </p>
-      <form
-        className="mt-8 flex flex-col gap-5"
-        onSubmit={(event) => {
-          event.preventDefault();
-          alert(
-            `Email verification UI only. Selected role: ${role}. Connect to the backend next.`,
-          );
-        }}
-      >
+      <form className="mt-8 flex flex-col gap-5" onSubmit={handleSubmit}>
         <div
           className=" grid gap-3 sm:grid-cols-2"
           role="radiogroup"
@@ -73,6 +146,8 @@ const VarifyEmailPage = () => {
             name="username"
             autoComplete="username"
             placeholder="your-username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             className="rounded-[10px] border border-border bg-surface-raised px-3.5 py-3 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20"
             required
           />
@@ -86,6 +161,8 @@ const VarifyEmailPage = () => {
               inputMode="numeric"
               autoComplete="one-time-code"
               placeholder="Enter 6-digit code"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
               maxLength={6}
               pattern="[0-9]{6}"
               className="w-full rounded-[10px] border border-border bg-surface-raised px-3.5 py-3 text-sm tracking-[0.2em] text-text-primary outline-none placeholder:tracking-normal placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20"
@@ -93,17 +170,30 @@ const VarifyEmailPage = () => {
             />
             <button
               type="button"
-              className="cursor-pointer rounded-[10px] bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primary-hover w-44"
+              disabled={resendCodeLoading || countDown > 0}
+              className={`rounded-[10px] bg-primary px-3 py-3 min-w-44 text-nowrap text-sm font-semibold  cursor-pointer text-white hover:bg-primary-hover ${resendCodeLoading ? "cursor-not-allowed opacity-70" : ""}`}
+              onClick={handleResendCode}
             >
-              Resend code
+              {resendCodeLoading ? (
+                <LoaderCircle className="animate-spin mx-auto" />
+              ) : countDown > 0 ? (
+                `Resend Code (${countDown}s)`
+              ) : (
+                "Resend Code"
+              )}
             </button>
           </div>
         </label>
         <button
-          className="w-full cursor-pointer rounded-[10px] bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primary-hover"
+          disabled={loading}
+          className={`w-full rounded-[10px] bg-primary px-5 py-3 text-sm font-semibold  cursor-pointer text-white hover:bg-primary-hover ${loading ? "cursor-not-allowed opacity-70" : ""}`}
           type="submit"
         >
-          Verify email
+          {loading ? (
+            <LoaderCircle className="animate-spin mx-auto" />
+          ) : (
+            "Verify Email"
+          )}
         </button>
       </form>
     </>

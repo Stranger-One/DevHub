@@ -1,4 +1,4 @@
-import axios, {
+import {
   AxiosError,
   type AxiosInstance,
   type AxiosResponse,
@@ -7,6 +7,7 @@ import axios, {
 
 import { normalizeApiError } from "./errorNormalizer";
 import axiosInstance from "./axiosInstance";
+import { handleApiError } from "../notification/handleApiError";
 
 let refreshPromise: Promise<void> | null = null;
 
@@ -19,7 +20,9 @@ function handleRequest(config: InternalAxiosRequestConfig) {
 }
 
 function handleRequestError(error: unknown) {
-  return Promise.reject(error);
+  const normalizedError = normalizeApiError(error);
+  handleApiError(normalizedError);
+  return Promise.reject(normalizedError);
 }
 
 function handleResponse(response: AxiosResponse) {
@@ -36,7 +39,9 @@ async function handleResponseError(error: AxiosError) {
     originalRequest.skipAuthRefresh ||
     originalRequest._retry
   ) {
-    return Promise.reject(normalizeApiError(error));
+    const normalizedError = normalizeApiError(error);
+    handleApiError(normalizedError);
+    return Promise.reject(normalizedError);
   }
 
   // Mark this request as already retried.
@@ -61,7 +66,9 @@ async function handleResponseError(error: AxiosError) {
   } catch (refreshError) {
     refreshPromise = null;
 
-    return Promise.reject(normalizeApiError(refreshError));
+    const normalizedError = normalizeApiError(refreshError);
+    handleApiError(normalizedError);
+    return Promise.reject(normalizedError);
   }
 }
 

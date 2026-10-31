@@ -5,7 +5,9 @@ import { ApiError } from "./apiError";
 import type { ApiErrorPayload, ApiFieldError } from "../../types/api.types";
 
 interface BackendErrorResponse {
+  success?: false;
   message?: string;
+  description?: string;
   code?: string;
   statusCode?: number;
   errors?: ApiFieldError[];
@@ -90,6 +92,10 @@ export function normalizeApiError(error: unknown): ApiError {
       typeof backendError.message === "string"
         ? backendError.message
         : (STATUS_MESSAGES[statusCode] ?? "Something went wrong."),
+    description:
+      typeof backendError.description === "string"
+        ? backendError.description
+        : "Please try again.",
     statusCode,
     code:
       typeof backendError.code === "string" ? backendError.code : "HTTP_ERROR",
@@ -97,14 +103,13 @@ export function normalizeApiError(error: unknown): ApiError {
   });
 }
 
-export function toApiErrorPayload(
-  error: unknown
-): ApiErrorPayload {
+export function toApiErrorPayload(error: unknown): ApiErrorPayload {
   const normalized = normalizeApiError(error);
 
   return {
     success: false,
     message: normalized.message,
+    description: normalized.description,
     statusCode: normalized.statusCode,
     code: normalized.code,
     errors: normalized.errors,

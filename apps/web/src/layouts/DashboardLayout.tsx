@@ -1,9 +1,23 @@
 import { Link, NavLink, Outlet } from "react-router-dom";
-import { useAppSelector } from "../app/hooks";
+import { useAppDispatch, useAppSelector } from "../app/hooks";
+import { logoutUser } from "../features/auth/authThunk";
+import { toast } from "sonner";
 
 export function DashboardLayout() {
+  const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
   const base = user?.role === "developer" ? "/developer" : "/client";
+
+  const handleLogout = async () => {
+    try {
+      await dispatch(logoutUser());
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      toast.success("Logged out successfully");
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-background text-text-primary">
       <aside className="hidden w-64 shrink-0 border-r border-border bg-surface px-5 py-6 md:flex md:flex-col">
@@ -57,17 +71,22 @@ export function DashboardLayout() {
             Settings
           </NavLink>
         </nav>
-        <div className="mt-auto flex items-center gap-3 border-t border-border pt-5">
-          <div className="grid size-9 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-bold text-accent-purple">
-            {user?.username?.slice(0, 1).toUpperCase() ?? "U"}
-          </div>
-          <div>
-            <strong className="block text-sm">
-              {user?.profile?.displayName ?? user?.username ?? "Your account"}
-            </strong>
-            <span className="text-xs capitalize text-text-muted">
-              {user?.role ?? "Member"}
-            </span>
+        <div className="mt-auto flex flex-col gap-3 border-t border-border pt-5">
+          <button className="rounded-lg px-3 py-2 hover:bg-surface-hover hover:text-text-primary cursor-pointer" onClick={handleLogout}>
+            Logout
+          </button>
+          <div className=" flex items-center gap-3">
+            <div className="grid size-9 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-bold text-accent-purple">
+              {user?.username?.slice(0, 1).toUpperCase() ?? "U"}
+            </div>
+            <div>
+              <strong className="block text-sm">
+                {user?.username ?? "Your account"}
+              </strong>
+              <span className="text-xs capitalize text-text-muted">
+                {user?.role ?? "Member"}
+              </span>
+            </div>
           </div>
         </div>
       </aside>

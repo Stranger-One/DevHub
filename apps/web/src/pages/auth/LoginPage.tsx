@@ -1,7 +1,7 @@
 import { Eye, EyeOff, LoaderCircle } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "../../app/hooks";
+import { useAppDispatch } from "../../app/hooks";
 import { loginUser } from "../../features/auth/authThunk";
 
 export function LoginPage() {

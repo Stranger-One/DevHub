@@ -58,7 +58,7 @@ export function AppRouter() {
   const pageLoading = async () => {
     try {
       await dispatch(fetchCurrentUser());
-      console.log("fetchCurrentUser called")
+      console.log("fetchCurrentUser called");
     } catch (error) {
       console.error("Failed to refresh user:", error);
     } finally {
@@ -137,7 +137,7 @@ export function AppRouter() {
           <Route path="/auth" element={<AuthLayout />}>
             <Route path="login" element={<LoginPage />} />
             <Route path="register" element={<RegisterPage />} />
-            <Route path="verify-email" element={<VarifyEmailPage />} />
+            <Route path="verify-email/:id" element={<VarifyEmailPage />} />
             <Route path="forgot-password" element={<ForgotPasswordPage />} />
           </Route>
         </Route>

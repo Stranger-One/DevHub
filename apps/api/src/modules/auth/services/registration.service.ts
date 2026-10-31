@@ -7,6 +7,7 @@ import { hashPassword } from "./password.service.js";
 import { createOTP, verifyOTP } from "./otp.service.js";
 import { sendOTPEmail } from "./email.service.js";
 import { generateTokenPair, hashRefreshToken } from "./token.service.js";
+import { ApiError } from "../../../errors/api-error.js";
 
 interface RegisterInput {
   email: string;
@@ -14,7 +15,7 @@ interface RegisterInput {
 }
 
 interface CompleteRegistrationInput {
-  email: string;
+  id: string;
   otp: string;
   username: string;
   role: "developer" | "client";
@@ -33,16 +34,6 @@ interface RegistrationResult {
   };
 }
 
-export class AuthServiceError extends Error {
-  constructor(
-    message: string,
-    public statusCode: number,
-  ) {
-    super(message);
-    this.name = "AuthServiceError";
-  }
-}
-
 const normalizeEmail = (email: string): string => email.trim().toLowerCase();
 
 const isDuplicateKeyError = (error: unknown): boolean =>
@@ -53,30 +44,27 @@ const isDuplicateKeyError = (error: unknown): boolean =>
 
 const handleRegistrationError = (error: unknown): never => {
   if (isDuplicateKeyError(error)) {
-    throw new AuthServiceError("Email or username is already registered", 409);
+    throw new ApiError("Email or username is already registered", 409, {
+      code: "AUTH_CONFLICT",
+    });
   }
 
   throw error;
 };
 
-export const registerWithEmail = async (
-  input: RegisterInput,
-): Promise<void> => {
+export const registerWithEmail = async (input: RegisterInput) => {
   const email = normalizeEmail(input.email);
 
   const existingUser = await UserModel.exists({ email });
 
   if (existingUser) {
-    throw new AuthServiceError(
-      "An account with this email already exists",
-      409,
-    );
+    throw new ApiError("An account with this email already exists", 409);
   }
 
   const existingPending = await PendingRegistrationModel.findOne({ email });
 
   if (existingPending && existingPending.expiresAt > new Date()) {
-    throw new AuthServiceError(
+    throw new ApiError(
       "Registration already started. Please verify your email or request a new OTP.",
       409,
     );
@@ -103,43 +91,43 @@ export const registerWithEmail = async (
   const { code } = await createOTP(email, "email_verification");
 
   await sendOTPEmail(email, code, "email_verification");
-
+  return pendingRegistration?._id;
 };
 
-export const resendRegistrationOTP = async (
-  emailInput: string,
-): Promise<void> => {
-  const email = normalizeEmail(emailInput);
-
-  const existingUser = await UserModel.exists({ email });
+export const resendRegistrationOTP = async (id: string): Promise<void> => {
+  const existingUser = await UserModel.exists({ _id: id });
 
   if (existingUser) {
-    throw new AuthServiceError("This email is already registered", 409);
+    throw new ApiError("This email is already registered", 409, {
+      code: "AUTH_CONFLICT",
+    });
   }
 
   const pendingRegistration = await PendingRegistrationModel.findOne({
-    email,
+    _id: id,
     authProvider: "email",
     expiresAt: { $gt: new Date() },
   });
 
   if (!pendingRegistration) {
-    throw new AuthServiceError(
+    throw new ApiError(
       "No active registration found. Please register again.",
       404,
     );
   }
 
-  const { code } = await createOTP(email, "email_verification");
+  const { code } = await createOTP(
+    pendingRegistration.email,
+    "email_verification",
+  );
 
-  await sendOTPEmail(email, code, "email_verification");
+  await sendOTPEmail(pendingRegistration.email, code, "email_verification");
 };
 
 export const completeEmailRegistration = async (
   input: CompleteRegistrationInput,
   device: DeviceInfo,
 ): Promise<RegistrationResult> => {
-  const email = normalizeEmail(input.email);
   const dbSession = await mongoose.startSession();
 
   let otpValid = false;
@@ -148,7 +136,7 @@ export const completeEmailRegistration = async (
   try {
     await dbSession.withTransaction(async () => {
       const pendingRegistration = await PendingRegistrationModel.findOne({
-        email,
+        _id: input.id,
         authProvider: "email",
         expiresAt: { $gt: new Date() },
       })
@@ -156,25 +144,25 @@ export const completeEmailRegistration = async (
         .session(dbSession);
 
       if (!pendingRegistration) {
-        throw new AuthServiceError(
+        throw new ApiError(
           "Registration expired or not found. Please register again.",
           404,
         );
       }
 
       const existingUser = await UserModel.exists({
-        $or: [{ email }, { username: input.username }],
+        $or: [
+          { email: pendingRegistration.email },
+          { username: input.username },
+        ],
       }).session(dbSession);
 
       if (existingUser) {
-        throw new AuthServiceError(
-          "Email or username is already registered",
-          409,
-        );
+        throw new ApiError("Email or username is already registered", 409);
       }
 
       otpValid = await verifyOTP(
-        email,
+        pendingRegistration.email,
         "email_verification",
         input.otp,
         dbSession,
@@ -185,7 +173,7 @@ export const completeEmailRegistration = async (
       const [user] = await UserModel.create(
         [
           {
-            email,
+            email: pendingRegistration.email,
             username: input.username,
             passwordHash: pendingRegistration.passwordHash,
             role: input.role,
@@ -238,11 +226,15 @@ export const completeEmailRegistration = async (
   }
 
   if (!otpValid) {
-    throw new AuthServiceError("Invalid or expired OTP", 400);
+    throw new ApiError("Invalid or expired OTP", 400, {
+      code: "AUTH_INVALID_OTP",
+    });
   }
 
   if (!registrationResult) {
-    throw new AuthServiceError("Registration could not be completed", 500);
+    throw new ApiError("Registration could not be completed", 500, {
+      code: "AUTH_REGISTRATION_FAILED",
+    });
   }
 
   return registrationResult;

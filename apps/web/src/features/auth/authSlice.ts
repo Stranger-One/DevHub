@@ -2,7 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 import type { AuthState } from "../../types/auth.types";
 import {
   loginUser,
-  registerUser,
+  verifyEmail,
   fetchCurrentUser,
   logoutUser,
 } from "./authThunk";
@@ -49,23 +49,20 @@ const authSlice = createSlice({
         state.status = "failed";
         state.error =
           action.payload?.message ?? action.error.message ?? "Login failed.";
-        toast.error(
-          action.payload?.message ?? action.error.message ?? "Login failed.",
-        );
       });
 
     // REGISTER
     builder
-      .addCase(registerUser.pending, (state) => {
+      .addCase(verifyEmail.pending, (state) => {
         state.status = "loading";
         state.error = null;
       })
-      .addCase(registerUser.fulfilled, (state, action) => {
+      .addCase(verifyEmail.fulfilled, (state, action) => {
         state.status = "succeeded";
         state.user = action.payload;
         state.isAuthenticated = true;
       })
-      .addCase(registerUser.rejected, (state, action) => {
+      .addCase(verifyEmail.rejected, (state, action) => {
         state.status = "failed";
         state.error =
           action.payload?.message ??

@@ -8,16 +8,17 @@ export interface ApiResponse<T> {
 }
 
 export interface ApiFieldError {
-  field?: string;
+  field: string;
   message: string;
 }
 
 export interface ApiErrorPayload {
   success: false;
   message: string;
+  description: string;
   statusCode?: number;
   code?: string;
-  errors?: ApiFieldError[];
+  errors: ApiFieldError[];
   isNetworkError?: boolean;
   isTimeout?: boolean;
 }

@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 
 import { getAccessTokenFromCookies } from "../utils/cookie.utils.js";
 import { authenticateAccessToken } from "../services/authentication.service.js";
+import { ApiError } from "../../../errors/api-error.js";
 
 export const authenticate = async (
   req: Request,
@@ -12,10 +13,11 @@ export const authenticate = async (
     const accessToken = getAccessTokenFromCookies(req.cookies);
 
     if (!accessToken) {
-      res.status(401).json({
-        success: false,
-        message: "Authentication required",
-      });
+      next(
+        new ApiError("Authentication required", 401, {
+          code: "AUTHENTICATION_REQUIRED",
+        }),
+      );
       return;
     }
 

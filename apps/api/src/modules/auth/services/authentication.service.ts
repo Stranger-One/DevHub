@@ -12,7 +12,7 @@ import {
   verifyRefreshToken,
 } from "./token.service.js";
 
-import { AuthServiceError } from "./registration.service.js";
+import { ApiError } from "../../../errors/api-error.js";
 
 interface LoginInput {
   email: string;
@@ -51,7 +51,9 @@ export const loginWithEmail = async (
   const user = await UserModel.findOne({ email }).select("+passwordHash");
 
   if (!user || !user.passwordHash) {
-    throw new AuthServiceError("Invalid email or password", 401);
+    throw new ApiError("Invalid email or password", 401, {
+      code: "AUTH_INVALID_CREDENTIALS",
+    });
   }
 
   const isPasswordValid = await verifyPassword(
@@ -60,14 +62,13 @@ export const loginWithEmail = async (
   );
 
   if (!isPasswordValid) {
-    throw new AuthServiceError("Invalid email or password", 401);
+    throw new ApiError("Invalid email or password", 401, {
+      code: "AUTH_INVALID_CREDENTIALS",
+    });
   }
 
   if (!user.emailVerified) {
-    throw new AuthServiceError(
-      "Please verify your email before logging in",
-      403,
-    );
+    throw new ApiError("Please verify your email before logging in", 403);
   }
 
   const sessionId = new Types.ObjectId();
@@ -104,14 +105,18 @@ export const refreshSession = async (
   try {
     payload = verifyRefreshToken(refreshToken);
   } catch {
-    throw new AuthServiceError("Invalid or expired refresh token", 401);
+    throw new ApiError("Invalid or expired refresh token", 401, {
+      code: "AUTH_INVALID_REFRESH_TOKEN",
+    });
   }
 
   if (
     !Types.ObjectId.isValid(payload.sub) ||
     !Types.ObjectId.isValid(payload.sid)
   ) {
-    throw new AuthServiceError("Invalid refresh token", 401);
+    throw new ApiError("Invalid refresh token", 401, {
+      code: "AUTH_INVALID_REFRESH_TOKEN",
+    });
   }
 
   const session = await SessionModel.findOne({
@@ -120,7 +125,9 @@ export const refreshSession = async (
   }).select("+refreshTokenHash");
 
   if (!session || session.status !== "active") {
-    throw new AuthServiceError("Session is no longer active", 401);
+    throw new ApiError("Session is no longer active", 401, {
+      code: "AUTH_SESSION_INACTIVE",
+    });
   }
 
   if (session.expiresAt <= new Date()) {
@@ -134,7 +141,9 @@ export const refreshSession = async (
       },
     );
 
-    throw new AuthServiceError("Session has expired", 401);
+    throw new ApiError("Session has expired", 401, {
+      code: "AUTH_SESSION_EXPIRED",
+    });
   }
 
   const incomingHash = hashRefreshToken(refreshToken);
@@ -155,7 +164,7 @@ export const refreshSession = async (
       },
     );
 
-    throw new AuthServiceError(
+    throw new ApiError(
       "Refresh token reuse detected. Please log in again.",
       401,
     );
@@ -196,7 +205,7 @@ export const refreshSession = async (
       },
     );
 
-    throw new AuthServiceError(
+    throw new ApiError(
       "Refresh token is no longer valid. Please log in again.",
       401,
     );
@@ -259,14 +268,18 @@ export const authenticateAccessToken = async (
   try {
     payload = verifyAccessToken(accessToken);
   } catch {
-    throw new AuthServiceError("Invalid or expired access token", 401);
+    throw new ApiError("Invalid or expired access token", 401, {
+      code: "AUTH_INVALID_ACCESS_TOKEN",
+    });
   }
 
   if (
     !Types.ObjectId.isValid(payload.sub) ||
     !Types.ObjectId.isValid(payload.sid)
   ) {
-    throw new AuthServiceError("Invalid access token", 401);
+    throw new ApiError("Invalid access token", 401, {
+      code: "AUTH_INVALID_ACCESS_TOKEN",
+    });
   }
 
   const session = await SessionModel.findOne({
@@ -278,7 +291,7 @@ export const authenticateAccessToken = async (
   });
 
   if (!session) {
-    throw new AuthServiceError(
+    throw new ApiError(
       "Session is no longer active. Please log in again.",
       401,
     );
@@ -295,7 +308,9 @@ export const getAuthenticatedUser = async (userId: string) => {
   const user = await UserModel.findById(userId);
 
   if (!user) {
-    throw new AuthServiceError("User not found", 404);
+    throw new ApiError("User not found", 404, {
+      code: "USER_NOT_FOUND",
+    });
   }
 
   return user;

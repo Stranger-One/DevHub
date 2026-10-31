@@ -19,11 +19,16 @@ export const register = async (
   try {
     const body = req.body
 
-    await registerWithEmail(body);
+   const userId = await registerWithEmail(body);
 
     res.status(201).json({
       success: true,
       message: "Registration started. Please verify your email.",
+      data: {
+        user: {
+          id: userId,
+        }
+      },
     });
   } catch (error) {
     next(error);
@@ -38,7 +43,7 @@ export const resendRegistrationOtp = async (
   try {
     const body = req.body;
 
-    await resendRegistrationOTP(body.email);
+    await resendRegistrationOTP(body.id);
 
     res.status(200).json({
       success: true,

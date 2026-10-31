@@ -4,6 +4,7 @@ import type {
   LoginCredentials,
   RegisterCredentials,
   User,
+  VerifyEmailCredentials,
 } from "../../types/auth.types";
 import type { ApiErrorPayload } from "../../types/api.types";
 import { toApiErrorPayload } from "../../services/api/errorNormalizer";
@@ -25,13 +26,13 @@ export const loginUser = createAsyncThunk<
 
 
 // REGISTER
-export const registerUser = createAsyncThunk<
+export const verifyEmail = createAsyncThunk<
   User,
-  RegisterCredentials,
+  VerifyEmailCredentials,
   { rejectValue: ApiErrorPayload }
->("auth/register", async (credentials, { rejectWithValue }) => {
+>("auth/verifyEmail", async (credentials, { rejectWithValue }) => {
   try {
-    const response = await authService.register(credentials);
+    const response = await authService.verifyEmail(credentials);
 
     return response.data.user;
   } catch (error) {

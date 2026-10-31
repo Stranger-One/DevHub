@@ -20,9 +20,15 @@ export interface LoginCredentials {
 }
 
 export interface RegisterCredentials {
-  username: string;
   email: string;
   password: string;
+}
+
+export interface VerifyEmailCredentials {
+  id: string;
+  otp: string;
+  username: string;
+  role: UserRole;
 }
 
 export interface AuthState {

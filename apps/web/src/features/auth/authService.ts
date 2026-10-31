@@ -1,7 +1,7 @@
 import axiosInstance from "../../services/api/axiosInstance";
 
 import type { ApiResponse } from "../../types/api.types";
-import type { LoginCredentials, RegisterCredentials, User } from "../../types/auth.types";
+import type { LoginCredentials, RegisterCredentials, User, VerifyEmailCredentials } from "../../types/auth.types";
 
 
 interface AuthResponse {
@@ -18,7 +18,7 @@ export const authService = {
     return response.data;
   },
 
-  async refresh(){
+  async refresh() {
     const response = await axiosInstance.post(
       "/auth/refresh",
       {},
@@ -30,9 +30,9 @@ export const authService = {
     return response.data;
   },
 
-  async register(credentials: RegisterCredentials) {
+  async verifyEmail(credentials: VerifyEmailCredentials) {
     const response = await axiosInstance.post<ApiResponse<AuthResponse>>(
-      "/auth/register",
+      "/auth/register/verify-otp",
       credentials,
     );
 
