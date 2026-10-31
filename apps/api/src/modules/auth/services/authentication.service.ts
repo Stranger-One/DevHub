@@ -191,7 +191,7 @@ export const refreshSession = async (
         expiresAt: new Date(Date.now() + SESSION_DURATION_MS),
       },
     },
-    { new: true },
+    { returnDocument: "after" },
   );
 
   if (!updatedSession) {

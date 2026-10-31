@@ -144,7 +144,7 @@ export const verifyOTP = async (
     {
       $set: { consumedAt: now },
     },
-    { new: true },
+    { returnDocument: "after" },
   );
 
   if (dbSession) {

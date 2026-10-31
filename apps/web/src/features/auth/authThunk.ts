@@ -2,7 +2,6 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { authService } from "./authService";
 import type {
   LoginCredentials,
-  RegisterCredentials,
   User,
   VerifyEmailCredentials,
 } from "../../types/auth.types";

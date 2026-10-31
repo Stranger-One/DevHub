@@ -1,7 +1,7 @@
 import axiosInstance from "../../services/api/axiosInstance";
 
 import type { ApiResponse } from "../../types/api.types";
-import type { LoginCredentials, RegisterCredentials, User, VerifyEmailCredentials } from "../../types/auth.types";
+import type { LoginCredentials, User, VerifyEmailCredentials } from "../../types/auth.types";
 
 
 interface AuthResponse {
