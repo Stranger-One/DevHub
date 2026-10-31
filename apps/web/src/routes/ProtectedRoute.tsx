@@ -1,6 +1,5 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import type { UserRole } from "../types/auth.types";
-import { LoadingScreen } from "../components/feedback/LoadingScreen";
 import { useAppSelector } from "../app/hooks";
 
 interface ProtectedRouteProps {
@@ -9,10 +8,10 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   const location = useLocation();
-  const { user, status } = useAppSelector((state) => state.auth);
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
 
-  if (status === "checking") return <LoadingScreen label="Checking access…" />;
-  if (status !== "authenticated" || !user) {
+
+  if (!isAuthenticated || !user) {
     return <Navigate to="/auth/login" replace state={{ from: location }} />;
   }
 

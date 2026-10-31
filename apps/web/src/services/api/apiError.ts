@@ -1,7 +1,6 @@
-export interface ApiFieldError {
-  field?: string;
-  message: string;
-}
+// services/api/apiError.ts
+
+import type { ApiFieldError } from "../../types/api.types";
 
 export interface ApiErrorOptions {
   message: string;

@@ -1,4 +1,4 @@
-export type UserRole = 'developer' | 'client';
+export type UserRole = "developer" | "client";
 
 export interface UserProfile {
   displayName?: string;
@@ -6,16 +6,28 @@ export interface UserProfile {
   avatarUrl?: string;
 }
 
-export interface AuthUser {
+export interface User {
   id: string;
   email: string;
   username: string;
   role: UserRole;
   emailVerified: boolean;
-  profile?: UserProfile;
 }
 
-// Adapt this to the exact response envelope returned by your Express API.
-export interface CurrentUserResponse {
-  user: AuthUser;
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface RegisterCredentials {
+  username: string;
+  email: string;
+  password: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  status: "idle" | "loading" | "succeeded" | "failed";
+  error: string | null;
 }

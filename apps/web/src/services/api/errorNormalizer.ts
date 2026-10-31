@@ -1,6 +1,8 @@
 import axios from "axios";
 
-import { ApiError, type ApiFieldError } from "./apiError";
+import { ApiError } from "./apiError";
+
+import type { ApiErrorPayload, ApiFieldError } from "../../types/api.types";
 
 interface BackendErrorResponse {
   message?: string;
@@ -93,4 +95,20 @@ export function normalizeApiError(error: unknown): ApiError {
       typeof backendError.code === "string" ? backendError.code : "HTTP_ERROR",
     errors,
   });
+}
+
+export function toApiErrorPayload(
+  error: unknown
+): ApiErrorPayload {
+  const normalized = normalizeApiError(error);
+
+  return {
+    success: false,
+    message: normalized.message,
+    statusCode: normalized.statusCode,
+    code: normalized.code,
+    errors: normalized.errors,
+    isNetworkError: normalized.isNetworkError,
+    isTimeout: normalized.isTimeout,
+  };
 }

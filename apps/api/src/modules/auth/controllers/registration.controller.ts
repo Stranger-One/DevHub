@@ -72,7 +72,13 @@ export const completeRegistration = async (
       success: true,
       message: "Registration completed successfully",
       data: {
-        user,
+        user: {
+          id: user._id,
+          email: user.email,
+          username: user.username,
+          role: user.role,
+          emailVerified: user.emailVerified,
+        },
       },
     });
   } catch (error) {

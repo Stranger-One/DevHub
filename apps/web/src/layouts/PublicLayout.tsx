@@ -2,7 +2,7 @@ import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAppSelector } from "../app/hooks";
 
 export function PublicLayout() {
-  const { user, status } = useAppSelector((state) => state.auth);
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
 
   return (
     <div className="min-h-screen bg-background text-text-primary">
@@ -39,7 +39,7 @@ export function PublicLayout() {
             </NavLink>
           </nav>
           <div className="flex items-center gap-2">
-            {status === "authenticated" && user ? (
+            {isAuthenticated && user ? (
               <Link
                 className="rounded-[10px] bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-purple"
                 to={

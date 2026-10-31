@@ -1,48 +1,134 @@
-import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { AuthUser } from "../../types/auth.types";
-
-export type AuthStatus = "checking" | "authenticated" | "unauthenticated";
-
-interface AuthState {
-  user: AuthUser | null;
-  status: AuthStatus;
-}
-
-// const developerUser: AuthUser = {
-//   id: "1234567890",
-//   email: "developer@example.com",
-//   username: "developer",
-//   role: "developer",
-//   emailVerified: true,
-// };
-
-// const clientUser: AuthUser = {
-//   id: "0987654321",
-//   email: "client@example.com",
-//   username: "client",
-//   role: "client",
-//   emailVerified: true,
-// };
+import { createSlice } from "@reduxjs/toolkit";
+import type { AuthState } from "../../types/auth.types";
+import {
+  loginUser,
+  registerUser,
+  fetchCurrentUser,
+  logoutUser,
+  refreshUser,
+} from "./authThunk";
+import { toast } from "sonner";
 
 const initialState: AuthState = {
   user: null,
-  status: "unauthenticated",
+  isAuthenticated: false,
+  status: "idle",
+  error: null,
 };
 
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    setAuthenticated(state, action: PayloadAction<AuthUser>) {
-      state.user = action.payload;
-      state.status = "authenticated";
+    clearAuthError(state) {
+      state.error = null;
     },
-    setUnauthenticated(state) {
+    resetAuthState(state) {
       state.user = null;
-      state.status = "unauthenticated";
+      state.isAuthenticated = false;
+      state.status = "idle";
+      state.error = null;
     },
+  },
+
+  extraReducers: (builder) => {
+    // LOGIN
+    builder
+      .addCase(loginUser.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.user = action.payload;
+        state.isAuthenticated = true;
+        toast.success("Logged in successfully!", {
+          description: `Welcome back, ${action.payload.username}!`,
+        });
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.status = "failed";
+        state.error =
+          action.payload?.message ?? action.error.message ?? "Login failed.";
+        toast.error(
+          action.payload?.message ?? action.error.message ?? "Login failed.",
+        );
+      });
+
+      // REFRESH
+    builder
+      .addCase(refreshUser.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
+      .addCase(refreshUser.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.user = action.payload;
+        state.isAuthenticated = true;
+      })
+      .addCase(refreshUser.rejected, (state, action) => {
+        state.status = "failed";
+        state.error =
+          action.payload?.message ?? action.error.message ?? "Refresh failed.";
+      });
+
+    // REGISTER
+    builder
+      .addCase(registerUser.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.user = action.payload;
+        state.isAuthenticated = true;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.status = "failed";
+        state.error =
+          action.payload?.message ??
+          action.error.message ??
+          "Registration failed.";
+      });
+
+    // FETCH CURRENT USER
+    builder
+      .addCase(fetchCurrentUser.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
+      .addCase(fetchCurrentUser.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.user = action.payload;
+        state.isAuthenticated = true;
+      })
+      .addCase(fetchCurrentUser.rejected, (state, action) => {
+        state.status = "failed";
+        state.error =
+          action.payload?.message ??
+          action.error.message ??
+          "Unable to fetch user.";
+      });
+
+    // LOGOUT
+    builder
+      .addCase(logoutUser.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.user = null;
+        state.isAuthenticated = false;
+        state.status = "idle";
+        state.error = null;
+      })
+      .addCase(logoutUser.rejected, (state, action) => {
+        state.error =
+          action.payload?.message ?? action.error.message ?? "Logout failed.";
+      });
   },
 });
 
-export const { setAuthenticated, setUnauthenticated } = authSlice.actions;
-export const authReducer = authSlice.reducer;
+export const { clearAuthError, resetAuthState } = authSlice.actions;
+
+export default authSlice.reducer;
+// export const authReducer = authSlice.reducer;

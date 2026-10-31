@@ -18,7 +18,7 @@ function handleRequestError(error: unknown) {
   return Promise.reject(error);
 }
 
-function handleResponse(response: AxiosResponse): AxiosResponse {
+function handleResponse(response: AxiosResponse) {
   return response;
 }
 

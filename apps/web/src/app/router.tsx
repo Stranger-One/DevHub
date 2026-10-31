@@ -15,9 +15,12 @@ import { NotificationsPage } from "../pages/shared/NotificationsPage";
 import { DeveloperRoutes } from "../pages/developer/DeveloperRoutes";
 import { ClientRoutes } from "../pages/client/ClientRoutes";
 import { NotFoundPage } from "../pages/system/NotFoundPage";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { GuestRoute } from "../routes/GuestRoute";
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "sonner";
+import { useAppDispatch } from "./hooks";
+import { refreshUser } from "../features/auth/authThunk";
+import { LoadingScreen } from "../components/feedback/LoadingScreen";
 
 function Page({ title }: { title: string }) {
   return <PlaceholderPage title={title} />;
@@ -49,7 +52,26 @@ function PublicPage({ children }: { children: ReactNode }) {
 }
 
 export function AppRouter() {
-  return (
+  const dispatch = useAppDispatch();
+  const [loading, setLoading] = useState(true);
+
+  const pageLoading = async () => {
+    try {
+      await dispatch(refreshUser());
+    } catch (error) {
+      console.error("Failed to refresh user:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    pageLoading();
+  }, []);
+
+  return loading ? (
+    <LoadingScreen />
+  ) : (
     <BrowserRouter>
       <Routes>
         {/* Public pages */}
@@ -146,13 +168,7 @@ export function AppRouter() {
           }
         />
       </Routes>
-      <Toaster
-        position="top-right"
-        reverseOrder={false}
-        toastOptions={{
-          duration: 3000,
-        }}
-      />
+      <Toaster />
     </BrowserRouter>
   );
 }

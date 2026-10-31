@@ -1,13 +1,11 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { useAppSelector } from "../app/hooks";
-import { LoadingScreen } from "../components/feedback/LoadingScreen";
+import { useAppSelector } from "../app/hooks";  
 
 export function GuestRoute() {
-  const { user, status } = useAppSelector((state) => state.auth);
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
 
-  if (status === "checking")
-    return <LoadingScreen label="Checking your session…" />;
-  if (status === "authenticated" && user) {
+
+  if (isAuthenticated && user) {
     return (
       <Navigate
         to={
