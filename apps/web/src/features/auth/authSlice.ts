@@ -5,7 +5,6 @@ import {
   registerUser,
   fetchCurrentUser,
   logoutUser,
-  refreshUser,
 } from "./authThunk";
 import { toast } from "sonner";
 
@@ -53,23 +52,6 @@ const authSlice = createSlice({
         toast.error(
           action.payload?.message ?? action.error.message ?? "Login failed.",
         );
-      });
-
-      // REFRESH
-    builder
-      .addCase(refreshUser.pending, (state) => {
-        state.status = "loading";
-        state.error = null;
-      })
-      .addCase(refreshUser.fulfilled, (state, action) => {
-        state.status = "succeeded";
-        state.user = action.payload;
-        state.isAuthenticated = true;
-      })
-      .addCase(refreshUser.rejected, (state, action) => {
-        state.status = "failed";
-        state.error =
-          action.payload?.message ?? action.error.message ?? "Refresh failed.";
       });
 
     // REGISTER

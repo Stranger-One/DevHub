@@ -138,7 +138,15 @@ export const getMe = async (
     res.status(200).json({
       success: true,
       message: "User fetched successfully",
-      data: { user: userObject },
+      data: {
+        user: {
+          id: userObject._id,
+          email: userObject.email,
+          username: userObject.username,
+          role: userObject.role,
+          emailVerified: userObject.emailVerified,
+        },
+      },
     });
   } catch (error) {
     next(error);

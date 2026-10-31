@@ -19,8 +19,12 @@ export const authService = {
   },
 
   async refresh(){
-    const response = await axiosInstance.post<ApiResponse<AuthResponse>>(
+    const response = await axiosInstance.post(
       "/auth/refresh",
+      {},
+      {
+        skipAuthRefresh: true,
+      },
     );
 
     return response.data;
@@ -37,7 +41,7 @@ export const authService = {
 
   async getCurrentUser() {
     const response =
-      await axiosInstance.get<ApiResponse<AuthResponse>>("/users/me");
+      await axiosInstance.get<ApiResponse<AuthResponse>>("/auth/me");
 
     return response.data;
   },

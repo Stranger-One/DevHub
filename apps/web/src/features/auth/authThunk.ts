@@ -23,20 +23,6 @@ export const loginUser = createAsyncThunk<
   }
 });
 
-// REFRESH
-export const refreshUser = createAsyncThunk<
-  User,
-  void,
-  { rejectValue: ApiErrorPayload }
->("auth/refresh", async (_, { rejectWithValue }) => {
-  try {
-    const response = await authService.refresh();
-
-    return response.data.user;
-  } catch (error) {
-    return rejectWithValue(toApiErrorPayload(error));
-  }
-});
 
 // REGISTER
 export const registerUser = createAsyncThunk<

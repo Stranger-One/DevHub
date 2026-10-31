@@ -19,8 +19,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { GuestRoute } from "../routes/GuestRoute";
 import { Toaster } from "sonner";
 import { useAppDispatch } from "./hooks";
-import { refreshUser } from "../features/auth/authThunk";
 import { LoadingScreen } from "../components/feedback/LoadingScreen";
+import { fetchCurrentUser } from "../features/auth/authThunk";
 
 function Page({ title }: { title: string }) {
   return <PlaceholderPage title={title} />;
@@ -57,7 +57,8 @@ export function AppRouter() {
 
   const pageLoading = async () => {
     try {
-      await dispatch(refreshUser());
+      await dispatch(fetchCurrentUser());
+      console.log("fetchCurrentUser called")
     } catch (error) {
       console.error("Failed to refresh user:", error);
     } finally {

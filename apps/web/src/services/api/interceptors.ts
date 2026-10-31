@@ -1,10 +1,14 @@
 import axios, {
+  AxiosError,
   type AxiosInstance,
   type AxiosResponse,
   type InternalAxiosRequestConfig,
 } from "axios";
 
 import { normalizeApiError } from "./errorNormalizer";
+import axiosInstance from "./axiosInstance";
+
+let refreshPromise: Promise<void> | null = null;
 
 function handleRequest(config: InternalAxiosRequestConfig) {
   // Common request configuration can be added here.
@@ -22,13 +26,43 @@ function handleResponse(response: AxiosResponse) {
   return response;
 }
 
-function handleResponseError(error: unknown) {
-  // Keep cancellations distinguishable from API failures.
-  if (axios.isCancel(error)) {
-    return Promise.reject(error);
+async function handleResponseError(error: AxiosError) {
+  const originalRequest = error.config;
+
+  // Only handle HTTP 401 errors.
+  if (
+    error.response?.status !== 401 ||
+    !originalRequest ||
+    originalRequest.skipAuthRefresh ||
+    originalRequest._retry
+  ) {
+    return Promise.reject(normalizeApiError(error));
   }
 
-  return Promise.reject(normalizeApiError(error));
+  // Mark this request as already retried.
+  originalRequest._retry = true;
+
+  try {
+    // If refresh is already running, reuse its promise.
+    if (!refreshPromise) {
+      refreshPromise = axiosInstance
+        .post("/auth/refresh", {}, { skipAuthRefresh: true })
+        .then(() => undefined)
+        .finally(() => {
+          refreshPromise = null;
+        });
+    }
+
+    // Wait for refresh to complete.
+    await refreshPromise;
+
+    // Retry the original request with the new cookie.
+    return axiosInstance(originalRequest);
+  } catch (refreshError) {
+    refreshPromise = null;
+
+    return Promise.reject(normalizeApiError(refreshError));
+  }
 }
 
 export function setupInterceptors(instance: AxiosInstance) {
