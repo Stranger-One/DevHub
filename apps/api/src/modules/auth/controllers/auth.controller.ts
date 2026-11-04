@@ -6,6 +6,8 @@ import {
   logoutSession,
   logoutAllSessions,
   getAuthenticatedUser,
+  sendForgotPasswordOtp,
+  verifyResetPassword,
 } from "../services/authentication.service.js";
 
 import {
@@ -155,3 +157,44 @@ export const getMe = async (
     next(error);
   }
 };
+
+export const forgotPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = await sendForgotPasswordOtp(req.body.email);
+
+    res.status(200).json({
+      success: true,
+      message: "An OTP has been sent to your email for password reset.",
+      data: {
+        user: {
+          id: userId
+        }
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resetPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    // Implement the logic for resetting the password using the provided OTP and new password
+    await verifyResetPassword(req.body);
+
+    res.status(200).json({
+      success: true,
+      message: "Password has been reset successfully.",
+    });
+    
+  } catch (error) {
+    next(error);
+  }
+}

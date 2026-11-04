@@ -2,6 +2,7 @@ import { InferSchemaType, model, Schema } from "mongoose";
 
 export const OTP_PURPOSES = [
   "email_verification",
+  "forgot_password",
   "password_reset",
   "email_change",
   "two_factor",

@@ -1,10 +1,10 @@
-import { Types } from "mongoose";
+import { ObjectId, Types } from "mongoose";
 import { timingSafeEqual } from "node:crypto";
 
 import { UserModel } from "../../users/user.model.js";
 import { SessionModel } from "../models/session.model.js";
 
-import { verifyPassword } from "./password.service.js";
+import { hashPassword, verifyPassword } from "./password.service.js";
 import {
   generateTokenPair,
   hashRefreshToken,
@@ -13,6 +13,9 @@ import {
 } from "./token.service.js";
 
 import { ApiError } from "../../../errors/api-error.js";
+import { createOTP, verifyOTP } from "./otp.service.js";
+import { sendOTPEmail } from "./email.service.js";
+import { ResetPasswordInput } from "../auth.validation.js";
 
 interface LoginInput {
   email: string;
@@ -315,3 +318,61 @@ export const getAuthenticatedUser = async (userId: string) => {
 
   return user;
 };
+
+export const sendForgotPasswordOtp = async (
+  email: string,
+) => {
+  const normalizedEmail = normalizeEmail(email);
+
+  if (!email) {
+    throw new ApiError("Email is required", 400, {
+      code: "AUTH_INVALID_CREDENTIALS",
+      description: "Email is required to send a password reset OTP",
+    });
+  }
+
+  const user = await UserModel.findOne({ email: normalizedEmail });
+
+  if (!user) {
+    throw new ApiError("User not found", 404, {
+      code: "AUTH_INVALID_CREDENTIALS",
+      description: "No user found with the provided email",
+    });
+  }
+
+  const { code } = await createOTP(email, "forgot_password");
+
+  await sendOTPEmail(email, code, "forgot_password");
+
+  return user._id;
+};
+
+export const verifyResetPassword = async (input: ResetPasswordInput): Promise<void> => {
+
+  const user = await UserModel.findById(input.id);
+  if (!user) {
+    throw new ApiError("User not found", 404, {
+      code: "AUTH_INVALID_CREDENTIALS",
+      description: "No user found with the provided ID",
+    });
+  }
+
+  // Verify the OTP
+  const isOtpValid = await verifyOTP(
+    user.email,
+    "forgot_password",
+    input.otp,
+  );
+
+  if (!isOtpValid) {
+    throw new ApiError("Invalid or expired OTP", 400, {
+      code: "AUTH_INVALID_OTP",
+      description: "The provided OTP is invalid or has expired",
+    });
+  }
+
+  // Update the user's password
+  user.passwordHash = await hashPassword(input.newPassword);
+  await user.save();
+
+}

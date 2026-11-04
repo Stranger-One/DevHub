@@ -29,6 +29,7 @@ const getTransporter = (): Transporter => {
 const getPurposeText = (purpose: OtpPurpose): string => {
   const messages: Record<OtpPurpose, string> = {
     email_verification: "verify your email address",
+    forgot_password: "reset your password",
     password_reset: "reset your password",
     email_change: "verify your new email address",
     two_factor: "complete your two-factor authentication",

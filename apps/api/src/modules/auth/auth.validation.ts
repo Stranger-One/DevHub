@@ -52,14 +52,10 @@ export const forgotPasswordSchema = z.object({
   email: emailSchema,
 });
 
-export const verifyResetOtpSchema = z.object({
-  email: emailSchema,
-  otp: otpSchema,
-});
-
 export const resetPasswordSchema = z.object({
-  resetToken: z.string().min(1),
+  id: z.string().min(1, "User ID is required"),
   newPassword: passwordSchema,
+  otp: otpSchema,
 });
 
 export const changePasswordSchema = z.object({
@@ -86,6 +82,7 @@ export type CompleteRegistrationInput = z.infer<
 >;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
-export type VerifyResetOtpInput = z.infer<typeof verifyResetOtpSchema>;
-export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type ResetPasswordInput = z.infer<
+  typeof resetPasswordSchema
+>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

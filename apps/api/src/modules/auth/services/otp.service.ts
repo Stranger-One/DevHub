@@ -2,6 +2,7 @@ import { createHmac, randomInt, timingSafeEqual } from "node:crypto";
 import type { ClientSession } from "mongoose";
 import { OTPModel } from "../models/otp.model.js";
 import type { OtpPurpose } from "../models/otp.model.js";
+import { ApiError } from "../../../errors/api-error.js";
 
 const OTP_LENGTH = 6;
 const OTP_EXPIRY_MINUTES = 5;
@@ -53,7 +54,10 @@ export const createOTP = async (
   }).sort({ createdAt: -1 });
 
   if (recentOTP) {
-    throw new Error("Please wait before requesting another OTP");
+    throw new ApiError("Please wait before requesting another OTP", 429, {
+      code: "AUTH_OTP_RESEND_COOLDOWN",
+      description: `You can request a new OTP after ${OTP_RESEND_COOLDOWN_SECONDS} seconds.`,
+    });
   }
 
   await OTPModel.updateMany(
