@@ -19,10 +19,10 @@ export const loginUser = createAsyncThunk<
 
     return response.data.user;
   } catch (error) {
+    console.error("Error in loginUser thunk:", error);
     return rejectWithValue(toApiErrorPayload(error));
   }
 });
-
 
 // REGISTER
 export const verifyEmail = createAsyncThunk<

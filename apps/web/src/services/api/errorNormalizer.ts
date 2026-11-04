@@ -32,6 +32,7 @@ function isBackendErrorResponse(value: unknown): value is BackendErrorResponse {
 }
 
 export function normalizeApiError(error: unknown): ApiError {
+  console.error("API Error:", error);
   if (error instanceof ApiError) {
     return error;
   }

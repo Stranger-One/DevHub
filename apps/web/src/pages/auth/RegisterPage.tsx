@@ -72,7 +72,6 @@ export function RegisterPage() {
               type={showPassword ? "text" : "password"}
               name="password"
               autoComplete="new-password"
-              minLength={8}
               placeholder="At least 8 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -96,7 +95,6 @@ export function RegisterPage() {
               type={showConfirmPassword ? "text" : "password"}
               name="confirm-password"
               autoComplete="new-password"
-              minLength={8}
               placeholder="Confirm your password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}

@@ -2,13 +2,17 @@ import type { ApiErrorPayload } from "../../types/api.types";
 
 import { notificationService } from "./notificationService";
 
-export function handleApiError(error: unknown) {
+const ERROR_MESSAGES_BY_CODE: Record<string, string> = {
+  AUTH_INVALID_CREDENTIALS: "Invalid email or password",
+};
+
+export function handleApiError(error: ApiErrorPayload) {
   if (typeof error !== "object" || error === null) {
     notificationService.error("Something went wrong.");
     return;
   }
 
-  const apiError = error as Partial<ApiErrorPayload>;
+  const apiError = error 
 
   if (apiError.isNetworkError) {
     notificationService.error(
@@ -25,14 +29,19 @@ export function handleApiError(error: unknown) {
 
   if (apiError.errors?.length) {
     for (const fieldError of apiError.errors) {
-      notificationService.error(fieldError.message, {
-        description: fieldError.field || apiError.description,
+      notificationService.error(apiError.message, {
+        description: fieldError.message,
       });
     }
     return;
   }
 
-  notificationService.error(apiError.message ?? "Something went wrong.", {
+  const message =
+    (apiError.code && ERROR_MESSAGES_BY_CODE[apiError.code]) ??
+    apiError.message ??
+    "Something went wrong.";
+
+  notificationService.error(message, {
     description: apiError.description,
   });
 }

@@ -8,7 +8,7 @@ export const validate = (schema: ZodSchema) => {
 
     if (!result.success) {
       next(
-        new ApiError("Validation failed", 400, {
+        new ApiError("Password Validation failed", 400, {
           code: "VALIDATION_ERROR",
           description: "One or more fields are invalid.",
           errors: result.error.issues.map((issue: any) => ({

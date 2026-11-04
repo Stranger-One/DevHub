@@ -1,8 +1,11 @@
 import axiosInstance from "../../services/api/axiosInstance";
 
 import type { ApiResponse } from "../../types/api.types";
-import type { LoginCredentials, User, VerifyEmailCredentials } from "../../types/auth.types";
-
+import type {
+  LoginCredentials,
+  User,
+  VerifyEmailCredentials,
+} from "../../types/auth.types";
 
 interface AuthResponse {
   user: User;
@@ -13,6 +16,9 @@ export const authService = {
     const response = await axiosInstance.post<ApiResponse<AuthResponse>>(
       "/auth/login",
       credentials,
+      {
+        skipAuthRefresh: true,
+      },
     );
 
     return response.data;
