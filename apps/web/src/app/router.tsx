@@ -7,6 +7,7 @@ import { PlaceholderPage } from "../pages/public/PlaceholderPage";
 import { LoginPage } from "../pages/auth/LoginPage";
 import { RegisterPage } from "../pages/auth/RegisterPage";
 import { ForgotPasswordPage } from "../pages/auth/ForgotPasswordPage";
+import { ResetPasswordPage } from "../pages/auth/ResetPasswordPage";
 import VarifyEmailPage from "../pages/auth/VarifyEmailPage";
 import { OnboardingPage } from "../pages/shared/OnboardingPage";
 import { SettingsPage } from "../pages/shared/SettingsPage";
@@ -139,6 +140,7 @@ export function AppRouter() {
             <Route path="register" element={<RegisterPage />} />
             <Route path="verify-email/:id" element={<VarifyEmailPage />} />
             <Route path="forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="reset-password/:id" element={<ResetPasswordPage />} />
           </Route>
         </Route>
 

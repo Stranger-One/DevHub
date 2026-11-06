@@ -343,6 +343,18 @@ Preferred icon library: `lucide-react`, unless the project already uses
 
 ## 9. Motion and states
 
+-   Use **Framer Motion** for component and UI animations whenever the
+    interaction benefits from motion. Prefer small, purposeful animations
+    such as fade-ins, subtle slide or scale transitions, staggered list
+    reveals, button feedback, modal entry and exit, and layout changes.
+-   Keep animations restrained and fast enough to preserve workflow. Motion
+    should clarify hierarchy, state, or interaction rather than distract
+    from content. Avoid animating every element or adding motion without a
+    clear user benefit.
+-   Reuse shared Framer Motion variants and transition values where possible
+    so components feel consistent. Animate transform and opacity when
+    practical, and avoid layout shifts or animations that resize surrounding
+    content unexpectedly.
 -   Use short, subtle transitions, generally `150ms–250ms`.
 -   Animate hover color, border, opacity, or small elevation changes.
 -   Avoid excessive bounce, parallax, or large movement unless

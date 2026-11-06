@@ -40,7 +40,7 @@ export function HomePage() {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
               className="rounded-[10px] bg-primary px-5 py-3.5 text-center text-sm font-semibold text-white shadow-[0_0_28px_rgba(145,75,255,0.25)] hover:bg-primary-hover"
-              to="/register"
+              to="/auth/register"
             >
               Join DevHub <span aria-hidden="true">↗</span>
             </Link>
@@ -72,11 +72,11 @@ export function HomePage() {
           </div>
         </div>
         <div
-          className="relative min-h-[360px]"
+          className="relative min-h-90"
           aria-label="Illustration of connected project cards"
         >
-          <div className="absolute inset-8 rounded-full border border-border-strong/60 [transform:rotate(-18deg)]" />
-          <div className="absolute inset-16 rounded-full border border-accent-purple/20 [transform:rotate(22deg)]" />
+          <div className="absolute inset-8 rounded-full border border-border-strong/60 transform-[rotate(-18deg)]" />
+          <div className="absolute inset-16 rounded-full border border-accent-purple/20 transform-[rotate(22deg)]" />
           <div className="absolute left-2 top-10 w-64 rounded-[14px] border border-border-strong bg-surface p-5 shadow-2xl sm:left-10">
             <span className="text-[0.625rem] font-bold tracking-[0.14em] text-text-muted">
               CURRENTLY BUILDING
@@ -126,14 +126,14 @@ export function HomePage() {
         </div>
       </section>
       <section className="border-y border-border bg-surface">
-        <div className="mx-auto flex max-w-[1160px] flex-col gap-3 px-6 py-6 text-xs text-text-muted sm:flex-row sm:items-center sm:justify-between lg:px-8">
+        <div className="mx-auto flex max-w-330 flex-col gap-3 px-6 py-6 text-xs text-text-muted sm:flex-row sm:items-center sm:justify-between lg:px-8">
           <span>ONE SPACE FOR YOUR NEXT CHAPTER</span>
           <span className="text-sm text-text-secondary">
             Discover <b>·</b> Collaborate <b>·</b> Launch <b>·</b> Grow
           </span>
         </div>
       </section>
-      <section className="mx-auto max-w-[1160px] px-6 py-20 lg:px-8 lg:py-28">
+      <section className="mx-auto max-w-330 px-6 py-20 lg:px-8 lg:py-28">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <span className="text-[0.6875rem] font-bold tracking-[0.16em] text-accent-purple">
@@ -170,8 +170,8 @@ export function HomePage() {
           ))}
         </div>
       </section>
-      <section className="px-6 pb-20 lg:px-8 lg:pb-28">
-        <div className="mx-auto flex max-w-[1160px] flex-col gap-8 rounded-[18px] border border-border-strong bg-[linear-gradient(110deg,#161026,#0d0f14_62%,#0d171c)] p-8 sm:p-12 lg:flex-row lg:items-center lg:justify-between">
+      <section className="mx-auto px-6 pb-20  max-w-330 lg:px-8 lg:pb-28">
+        <div className="flex max-w-330 flex-col gap-8 rounded-[18px] border border-border-strong bg-[linear-gradient(110deg,#161026,#0d0f14_62%,#0d171c)] p-8 sm:p-12 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <span className="text-[0.6875rem] font-bold tracking-[0.16em] text-accent-purple">
               YOUR NEXT CHAPTER STARTS HERE
@@ -185,8 +185,8 @@ export function HomePage() {
             </p>
           </div>
           <Link
-            to="/register"
-            className="shrink-0 rounded-[10px] bg-white px-5 py-3.5 text-center text-sm font-semibold text-background hover:bg-text-primary"
+            to="/auth/register"
+            className="rounded-[10px] bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-purple"
           >
             Get started <span aria-hidden="true">↗</span>
           </Link>

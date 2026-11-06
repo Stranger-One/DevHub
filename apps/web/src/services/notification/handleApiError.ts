@@ -27,6 +27,11 @@ export function handleApiError(error: ApiErrorPayload) {
     return;
   }
 
+  if (apiError.statusCode === 401) {
+    // notificationService.error("Unauthorized access. Please log in again.");
+    return;
+  }
+
   if (apiError.errors?.length) {
     for (const fieldError of apiError.errors) {
       notificationService.error(apiError.message, {
