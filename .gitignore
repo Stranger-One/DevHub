@@ -48,9 +48,6 @@ desktop.ini
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/*.code-snippets
-.env.example
+
 apps/api/.env
-apps/api/.env
-apps/api/.env
-apps/api/.env
-apps/api/.env
+

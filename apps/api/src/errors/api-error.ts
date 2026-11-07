@@ -12,6 +12,8 @@ const DEFAULT_DESCRIPTIONS: Record<ErrorCode, string> = {
   [ErrorCode.EMAIL_ERROR]: "The email operation could not be completed.",
   [ErrorCode.RESOURCE_NOT_FOUND]: "The requested resource does not exist.",
   [ErrorCode.RESOURCE_CONFLICT]: "The requested resource is already in use.",
+  [ErrorCode.INCOMPLETE_REGISTRATION]:
+    "The registration must be completed before continuing.",
   [ErrorCode.CONFIGURATION_ERROR]:
     "A required server service is not configured correctly.",
   [ErrorCode.INTERNAL_SERVER_ERROR]: "An unexpected server error occurred.",

@@ -27,7 +27,7 @@ export function HomePage() {
             <span className="size-2 rounded-full bg-accent-emerald shadow-[0_0_12px_rgba(0,214,160,0.7)]" />{" "}
             THE COMMUNITY FOR BUILDERS
           </div>
-          <h1 className="max-w-2xl text-5xl font-extrabold leading-[1.06] tracking-[-0.06em] sm:text-6xl lg:text-7xl">
+          <h1 className="max-w-2xl text-5xl font-bold leading-[1.06] tracking-[-0.06em] sm:text-6xl lg:text-7xl">
             Good things happen when{" "}
             <span className="bg-[linear-gradient(100deg,#b59aff_0%,#e879f9_48%,#69c9ff_100%)] bg-clip-text text-transparent">
               developers connect.
