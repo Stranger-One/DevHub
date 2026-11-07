@@ -1,10 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
 import {
-  registerSchema,
-  completeRegistrationSchema,
-  resendRegistrationOtpSchema,
-} from "../auth.validation.js";
-import {
   registerWithEmail,
   resendRegistrationOTP,
   completeEmailRegistration,
@@ -17,9 +12,9 @@ export const register = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const body = req.body
+    const body = req.body;
 
-   const userId = await registerWithEmail(body);
+    const userId = await registerWithEmail(body);
 
     res.status(201).json({
       success: true,
@@ -27,7 +22,7 @@ export const register = async (
       data: {
         user: {
           id: userId,
-        }
+        },
       },
     });
   } catch (error) {

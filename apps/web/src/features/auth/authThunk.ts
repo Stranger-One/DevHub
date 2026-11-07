@@ -7,6 +7,7 @@ import type {
 } from "../../types/auth.types";
 import type { ApiErrorPayload } from "../../types/api.types";
 import { toApiErrorPayload } from "../../services/api/errorNormalizer";
+import { logger } from "../../services/logger/logger";
 
 // LOGIN
 export const loginUser = createAsyncThunk<
@@ -19,7 +20,7 @@ export const loginUser = createAsyncThunk<
 
     return response.data.user;
   } catch (error) {
-    console.error("Error in loginUser thunk:", error);
+    logger.error("Error in loginUser thunk:", error);
     return rejectWithValue(toApiErrorPayload(error));
   }
 });

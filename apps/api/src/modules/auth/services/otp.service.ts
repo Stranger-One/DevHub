@@ -3,6 +3,7 @@ import type { ClientSession } from "mongoose";
 import { OTPModel } from "../models/otp.model.js";
 import type { OtpPurpose } from "../models/otp.model.js";
 import { ApiError } from "../../../errors/api-error.js";
+import { ErrorCode } from "../../../errors/error-code.js";
 
 const OTP_LENGTH = 6;
 const OTP_EXPIRY_MINUTES = 5;
@@ -55,7 +56,7 @@ export const createOTP = async (
 
   if (recentOTP) {
     throw new ApiError("Please wait before requesting another OTP", 429, {
-      code: "AUTH_OTP_RESEND_COOLDOWN",
+      code: ErrorCode.OTP_ERROR,
       description: `You can request a new OTP after ${OTP_RESEND_COOLDOWN_SECONDS} seconds.`,
     });
   }

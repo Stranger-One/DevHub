@@ -22,6 +22,7 @@ import { Toaster } from "sonner";
 import { useAppDispatch } from "./hooks";
 import { LoadingScreen } from "../components/feedback/LoadingScreen";
 import { fetchCurrentUser } from "../features/auth/authThunk";
+import { logger } from "../services/logger/logger";
 
 function Page({ title }: { title: string }) {
   return <PlaceholderPage title={title} />;
@@ -58,10 +59,10 @@ export function AppRouter() {
 
   const pageLoading = async () => {
     try {
+      logger.log("fetchCurrentUser called");
       await dispatch(fetchCurrentUser());
-      console.log("fetchCurrentUser called");
     } catch (error) {
-      console.error("Failed to refresh user:", error);
+      // logger.error("Failed to refresh user:", error);
     } finally {
       setLoading(false);
     }

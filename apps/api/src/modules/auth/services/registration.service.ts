@@ -1,5 +1,4 @@
 import mongoose, { Types } from "mongoose";
-import { OTPModel } from "../models/otp.model.js";
 import { PendingRegistrationModel } from "../models/pending-registration.model.js";
 import { SessionModel } from "../models/session.model.js";
 import { UserModel } from "../../users/user.model.js";
@@ -8,6 +7,7 @@ import { createOTP, verifyOTP } from "./otp.service.js";
 import { sendOTPEmail } from "./email.service.js";
 import { generateTokenPair, hashRefreshToken } from "./token.service.js";
 import { ApiError } from "../../../errors/api-error.js";
+import { ErrorCode } from "../../../errors/error-code.js";
 
 interface RegisterInput {
   email: string;
@@ -42,10 +42,50 @@ const isDuplicateKeyError = (error: unknown): boolean =>
   "code" in error &&
   error.code === 11000;
 
+const getDuplicateField = (error: unknown): "email" | "username" | null => {
+  if (
+    typeof error !== "object" ||
+    error === null ||
+    !("keyValue" in error) ||
+    typeof error.keyValue !== "object" ||
+    error.keyValue === null
+  ) {
+    return null;
+  }
+
+  const fields = Object.keys(error.keyValue);
+
+  if (fields.includes("email")) return "email";
+  if (fields.includes("username")) return "username";
+
+  return null;
+};
+
+const duplicateAccountError = (field: "email" | "username"): ApiError =>
+  new ApiError(
+    field === "email"
+      ? "An account with this email already exists"
+      : "This username is already taken",
+    409,
+    {
+      code: ErrorCode.RESOURCE_CONFLICT,
+      description:
+        field === "email"
+          ? "Use a different email address or sign in to the existing account."
+          : "Choose a different username for your account.",
+    },
+  );
+
 const handleRegistrationError = (error: unknown): never => {
   if (isDuplicateKeyError(error)) {
-    throw new ApiError("Email or username is already registered", 409, {
-      code: "AUTH_CONFLICT",
+    const duplicateField = getDuplicateField(error);
+
+    if (duplicateField) throw duplicateAccountError(duplicateField);
+
+    throw new ApiError("Account details are already in use", 409, {
+      code: ErrorCode.RESOURCE_CONFLICT,
+      description:
+        "The email or username is already associated with an account.",
     });
   }
 
@@ -58,20 +98,20 @@ export const registerWithEmail = async (input: RegisterInput) => {
   const existingUser = await UserModel.exists({ email });
 
   if (existingUser) {
-    throw new ApiError("An account with this email already exists", 409);
+    throw duplicateAccountError("email");
   }
 
   const existingPending = await PendingRegistrationModel.findOne({ email });
 
-  if (existingPending && existingPending.expiresAt > new Date()) {
-    throw new ApiError(
-      "Registration already started. Please verify your email or request a new OTP.",
-      409,
-    );
-  }
-
   if (existingPending) {
-    await PendingRegistrationModel.deleteOne({ _id: existingPending._id });
+    const hashNewPassword = await hashPassword(input.password);
+    existingPending.passwordHash = hashNewPassword;
+    await existingPending.save();
+
+    const { code } = await createOTP(email, "email_verification");
+    await sendOTPEmail(email, code, "email_verification");
+
+    return existingPending?._id;
   }
 
   const passwordHash = await hashPassword(input.password);
@@ -82,6 +122,7 @@ export const registerWithEmail = async (input: RegisterInput) => {
       email,
       passwordHash,
       authProvider: "email",
+      providerId: email,
       expiresAt: new Date(Date.now() + 30 * 60 * 1000),
     });
   } catch (error) {
@@ -99,7 +140,7 @@ export const resendRegistrationOTP = async (id: string): Promise<void> => {
 
   if (existingUser) {
     throw new ApiError("This email is already registered", 409, {
-      code: "AUTH_CONFLICT",
+      code: ErrorCode.RESOURCE_CONFLICT,
     });
   }
 
@@ -113,6 +154,7 @@ export const resendRegistrationOTP = async (id: string): Promise<void> => {
     throw new ApiError(
       "No active registration found. Please register again.",
       404,
+      { code: ErrorCode.RESOURCE_NOT_FOUND },
     );
   }
 
@@ -147,19 +189,21 @@ export const completeEmailRegistration = async (
         throw new ApiError(
           "Registration expired or not found. Please register again.",
           404,
+          { code: ErrorCode.RESOURCE_NOT_FOUND },
         );
       }
 
-      const existingUser = await UserModel.exists({
-        $or: [
-          { email: pendingRegistration.email },
-          { username: input.username },
-        ],
+      const existingEmail = await UserModel.exists({
+        email: pendingRegistration.email,
       }).session(dbSession);
 
-      if (existingUser) {
-        throw new ApiError("Email or username is already registered", 409);
-      }
+      if (existingEmail) throw duplicateAccountError("email");
+
+      const existingUsername = await UserModel.exists({
+        username: input.username,
+      }).session(dbSession);
+
+      if (existingUsername) throw duplicateAccountError("username");
 
       otpValid = await verifyOTP(
         pendingRegistration.email,
@@ -178,7 +222,12 @@ export const completeEmailRegistration = async (
             passwordHash: pendingRegistration.passwordHash,
             role: input.role,
             emailVerified: true,
-            authProviders: [],
+            authProviders: [
+              {
+                provider: "email",
+                providerId: pendingRegistration.email,
+              }
+            ],
           },
         ],
         { session: dbSession },
@@ -227,13 +276,13 @@ export const completeEmailRegistration = async (
 
   if (!otpValid) {
     throw new ApiError("Invalid or expired OTP", 400, {
-      code: "AUTH_INVALID_OTP",
+      code: ErrorCode.OTP_ERROR,
     });
   }
 
   if (!registrationResult) {
     throw new ApiError("Registration could not be completed", 500, {
-      code: "AUTH_REGISTRATION_FAILED",
+      code: ErrorCode.INTERNAL_SERVER_ERROR,
     });
   }
 

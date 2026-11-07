@@ -27,7 +27,7 @@ export function handleApiError(error: ApiErrorPayload) {
     return;
   }
 
-  if (apiError.statusCode === 401) {
+  if (apiError.code === "SESSION_ERROR" || apiError.code === "TOKEN_ERROR") {
     // notificationService.error("Unauthorized access. Please log in again.");
     return;
   }

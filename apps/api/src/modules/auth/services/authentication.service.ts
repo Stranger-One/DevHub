@@ -1,4 +1,4 @@
-import { ObjectId, Types } from "mongoose";
+import { Types } from "mongoose";
 import { timingSafeEqual } from "node:crypto";
 
 import { UserModel } from "../../users/user.model.js";
@@ -13,6 +13,7 @@ import {
 } from "./token.service.js";
 
 import { ApiError } from "../../../errors/api-error.js";
+import { ErrorCode } from "../../../errors/error-code.js";
 import { createOTP, verifyOTP } from "./otp.service.js";
 import { sendOTPEmail } from "./email.service.js";
 import { ResetPasswordInput } from "../auth.validation.js";
@@ -55,7 +56,7 @@ export const loginWithEmail = async (
 
   if (!user || !user.passwordHash) {
     throw new ApiError("Invalid email or password", 401, {
-      code: "AUTH_INVALID_CREDENTIALS",
+      code: ErrorCode.AUTHENTICATION_ERROR,
     });
   }
 
@@ -66,12 +67,15 @@ export const loginWithEmail = async (
 
   if (!isPasswordValid) {
     throw new ApiError("Invalid email or password", 401, {
-      code: "AUTH_INVALID_CREDENTIALS",
+      code: ErrorCode.AUTHENTICATION_ERROR,
     });
   }
 
   if (!user.emailVerified) {
-    throw new ApiError("Please verify your email before logging in", 403);
+    throw new ApiError("Please verify your email before logging in", 403, {
+      code: ErrorCode.AUTHENTICATION_ERROR,
+      description: "Verify your email address before signing in.",
+    });
   }
 
   const sessionId = new Types.ObjectId();
@@ -109,7 +113,7 @@ export const refreshSession = async (
     payload = verifyRefreshToken(refreshToken);
   } catch {
     throw new ApiError("Invalid or expired refresh token", 401, {
-      code: "AUTH_INVALID_REFRESH_TOKEN",
+      code: ErrorCode.TOKEN_ERROR,
     });
   }
 
@@ -118,7 +122,7 @@ export const refreshSession = async (
     !Types.ObjectId.isValid(payload.sid)
   ) {
     throw new ApiError("Invalid refresh token", 401, {
-      code: "AUTH_INVALID_REFRESH_TOKEN",
+      code: ErrorCode.TOKEN_ERROR,
     });
   }
 
@@ -129,7 +133,7 @@ export const refreshSession = async (
 
   if (!session || session.status !== "active") {
     throw new ApiError("Session is no longer active", 401, {
-      code: "AUTH_SESSION_INACTIVE",
+      code: ErrorCode.SESSION_ERROR,
     });
   }
 
@@ -145,7 +149,7 @@ export const refreshSession = async (
     );
 
     throw new ApiError("Session has expired", 401, {
-      code: "AUTH_SESSION_EXPIRED",
+      code: ErrorCode.SESSION_ERROR,
     });
   }
 
@@ -170,6 +174,7 @@ export const refreshSession = async (
     throw new ApiError(
       "Refresh token reuse detected. Please log in again.",
       401,
+      { code: ErrorCode.SESSION_ERROR },
     );
   }
 
@@ -211,6 +216,7 @@ export const refreshSession = async (
     throw new ApiError(
       "Refresh token is no longer valid. Please log in again.",
       401,
+      { code: ErrorCode.SESSION_ERROR },
     );
   }
 
@@ -272,7 +278,7 @@ export const authenticateAccessToken = async (
     payload = verifyAccessToken(accessToken);
   } catch {
     throw new ApiError("Invalid or expired access token", 401, {
-      code: "AUTH_INVALID_ACCESS_TOKEN",
+      code: ErrorCode.TOKEN_ERROR,
     });
   }
 
@@ -281,7 +287,7 @@ export const authenticateAccessToken = async (
     !Types.ObjectId.isValid(payload.sid)
   ) {
     throw new ApiError("Invalid access token", 401, {
-      code: "AUTH_INVALID_ACCESS_TOKEN",
+      code: ErrorCode.TOKEN_ERROR,
     });
   }
 
@@ -297,6 +303,7 @@ export const authenticateAccessToken = async (
     throw new ApiError(
       "Session is no longer active. Please log in again.",
       401,
+      { code: ErrorCode.SESSION_ERROR },
     );
   }
 
@@ -312,21 +319,19 @@ export const getAuthenticatedUser = async (userId: string) => {
 
   if (!user) {
     throw new ApiError("User not found", 404, {
-      code: "USER_NOT_FOUND",
+      code: ErrorCode.RESOURCE_NOT_FOUND,
     });
   }
 
   return user;
 };
 
-export const sendForgotPasswordOtp = async (
-  email: string,
-) => {
+export const sendForgotPasswordOtp = async (email: string) => {
   const normalizedEmail = normalizeEmail(email);
 
   if (!email) {
     throw new ApiError("Email is required", 400, {
-      code: "AUTH_INVALID_CREDENTIALS",
+      code: ErrorCode.VALIDATION_ERROR,
       description: "Email is required to send a password reset OTP",
     });
   }
@@ -335,7 +340,7 @@ export const sendForgotPasswordOtp = async (
 
   if (!user) {
     throw new ApiError("User not found", 404, {
-      code: "AUTH_INVALID_CREDENTIALS",
+      code: ErrorCode.RESOURCE_NOT_FOUND,
       description: "No user found with the provided email",
     });
   }
@@ -347,26 +352,23 @@ export const sendForgotPasswordOtp = async (
   return user._id;
 };
 
-export const verifyResetPassword = async (input: ResetPasswordInput): Promise<void> => {
-
+export const verifyResetPassword = async (
+  input: ResetPasswordInput,
+): Promise<void> => {
   const user = await UserModel.findById(input.id);
   if (!user) {
     throw new ApiError("User not found", 404, {
-      code: "AUTH_INVALID_CREDENTIALS",
+      code: ErrorCode.RESOURCE_NOT_FOUND,
       description: "No user found with the provided ID",
     });
   }
 
   // Verify the OTP
-  const isOtpValid = await verifyOTP(
-    user.email,
-    "forgot_password",
-    input.otp,
-  );
+  const isOtpValid = await verifyOTP(user.email, "forgot_password", input.otp);
 
   if (!isOtpValid) {
     throw new ApiError("Invalid or expired OTP", 400, {
-      code: "AUTH_INVALID_OTP",
+      code: ErrorCode.OTP_ERROR,
       description: "The provided OTP is invalid or has expired",
     });
   }
@@ -374,5 +376,4 @@ export const verifyResetPassword = async (input: ResetPasswordInput): Promise<vo
   // Update the user's password
   user.passwordHash = await hashPassword(input.newPassword);
   await user.save();
-
-}
+};

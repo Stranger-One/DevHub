@@ -1,10 +1,15 @@
 import mongoose from "mongoose";
+import { ApiError } from "../errors/api-error.js";
+import { ErrorCode } from "../errors/error-code.js";
 
 export async function connectDatabase() {
   const uri = process.env.MONGODB_URI;
 
   if (!uri) {
-    throw new Error("MONGODB_URI is not configured");
+    throw new ApiError("Database configuration is incomplete", 500, {
+      code: ErrorCode.CONFIGURATION_ERROR,
+      description: "The database connection is not configured.",
+    });
   }
 
   mongoose.connection.on("error", (error) => {

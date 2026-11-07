@@ -16,6 +16,7 @@ import {
   getRefreshTokenFromCookies,
 } from "../utils/cookie.utils.js";
 import { ApiError } from "../../../errors/api-error.js";
+import { ErrorCode } from "../../../errors/error-code.js";
 
 export const login = async (
   req: Request,
@@ -63,7 +64,7 @@ export const refresh = async (
       clearAuthCookies(res);
       next(
         new ApiError("Refresh token not found", 401, {
-          code: "AUTH_REFRESH_TOKEN_MISSING",
+          code: ErrorCode.TOKEN_ERROR,
         }),
       );
       return;
@@ -107,7 +108,7 @@ export const logout = async (
 };
 
 export const logoutAll = async (
-  req: Request,
+  _req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
@@ -128,7 +129,7 @@ export const logoutAll = async (
 };
 
 export const getMe = async (
-  req: Request,
+  _req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
@@ -171,9 +172,9 @@ export const forgotPassword = async (
       message: "An OTP has been sent to your email for password reset.",
       data: {
         user: {
-          id: userId
-        }
-      }
+          id: userId,
+        },
+      },
     });
   } catch (error) {
     next(error);
@@ -193,8 +194,7 @@ export const resetPassword = async (
       success: true,
       message: "Password has been reset successfully.",
     });
-    
   } catch (error) {
     next(error);
   }
-}
+};

@@ -32,7 +32,7 @@ function handleResponse(response: AxiosResponse) {
 async function handleResponseError(error: AxiosError) {
   const originalRequest = error.config;
 
-  // Only handle HTTP 401 errors.
+  //  If the error is not a 401 Unauthorized, or if the original request is missing, or if the original request has already been retried, we handle the error normally.
   if (
     error.response?.status !== 401 ||
     !originalRequest ||

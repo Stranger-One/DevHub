@@ -4,7 +4,7 @@ export const USER_ROLES = ["developer", "client"] as const;
 
 export type UserRole = (typeof USER_ROLES)[number];
 
-export const SOCIAL_PROVIDERS = ["google", "github"] as const;
+export const SOCIAL_PROVIDERS = ["email", "google", "github"] as const;
 
 export type SocialProvider = (typeof SOCIAL_PROVIDERS)[number];
 
