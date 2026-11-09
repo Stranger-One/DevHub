@@ -9,7 +9,6 @@ import {
   LogOut,
   Menu,
   MessageCircle,
-  PanelLeft,
   Settings,
   Sparkles,
   X,
@@ -17,7 +16,7 @@ import {
 } from "lucide-react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
-import { setSidebarPinned, toggleSidebarPinned } from "../app/uiSlice";
+import { setSidebarPinned } from "../app/uiSlice";
 import { logoutUser } from "../features/auth/authThunk";
 import { toast } from "sonner";
 
@@ -125,6 +124,21 @@ export function DashboardLayout() {
           Log out
         </span>
       </button> */}
+      <button
+        type="button"
+        onClick={mobile ? handleMobileLogout : handleLogout}
+        className="relative my-3 flex items-center w-full cursor-pointer hover:bg-primary-soft hover:shadow-[0_8px_24px_rgba(145,75,255,0.12)] "
+      >
+        <span className="p-3 shrink-0">
+          <LogOut size={20} strokeWidth={1.8} className="" />
+        </span>
+        <span
+          className={`transition-all duration-300 whitespace-nowrap ${isExpanded ? "translate-x-0 opacity-100" : "-translate-x-2 opacity-0"}`}
+        >
+          Log out
+        </span>
+      </button>
+
       <div
         className={`flex items-center gap-3 rounded-xl px-3 py-3 ${!mobile && !isExpanded ? "justify-center px-1" : ""}`}
       >
@@ -218,7 +232,7 @@ export function DashboardLayout() {
         <div
           className={`relative mb-3 mt-10 flex items-center gap-3 overflow-hidden px-3 text-sm font-medium transition-all ease-in-out duration-500`}
         >
-          <span className="relative grid size-9 rounded-xl shrink-0 place-items-center transition-transform ease-in-out duration-500 text-sm font-extrabold text-white ">
+          <span className="relative grid size-9 rounded-xl shrink-0 place-items-center text-sm font-extrabold text-white ">
             <Sparkles size={20} className="shrink-0 text-accent-cyan" />
           </span>
           <span

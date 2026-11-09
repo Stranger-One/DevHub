@@ -12,7 +12,7 @@ export function AuthLayout() {
         </span>{" "}
         DevHub
       </Link>
-      <section className="relative w-full max-w-[460px] rounded-[18px] border border-border bg-surface p-6 shadow-[0_20px_80px_rgba(0,0,0,0.3)] sm:p-8">
+      <section className="relative w-full max-w-115 rounded-[18px] border border-border bg-surface p-6 shadow-[0_20px_80px_rgba(0,0,0,0.3)] sm:p-8">
         <Outlet />
       </section>
       <p className="relative mt-6 text-sm text-text-muted">
