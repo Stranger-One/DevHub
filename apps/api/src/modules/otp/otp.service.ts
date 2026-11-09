@@ -1,9 +1,8 @@
 import { createHmac, randomInt, timingSafeEqual } from "node:crypto";
 import type { ClientSession } from "mongoose";
-import { OTPModel } from "../models/otp.model.js";
-import type { OtpPurpose } from "../models/otp.model.js";
-import { ApiError } from "../../../errors/api-error.js";
-import { ErrorCode } from "../../../errors/error-code.js";
+import { OTPModel, OtpPurpose } from "./otp.model.js";
+import { ApiError } from "../../errors/api-error.js";
+import { ErrorCode } from "../../errors/error-code.js";
 
 const OTP_LENGTH = 6;
 const OTP_EXPIRY_MINUTES = 5;

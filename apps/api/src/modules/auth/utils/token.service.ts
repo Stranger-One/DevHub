@@ -43,41 +43,6 @@ const signToken = (
   });
 };
 
-export const generateTokenPair = (
-  userId: string,
-  sessionId: string,
-  tokenVersion: number,
-): AuthTokens => {
-  const payload: TokenPayload = {
-    sub: userId,
-    sid: sessionId,
-    ver: tokenVersion,
-  };
-
-  const accessToken = signToken(
-    {
-      ...payload,
-      jti: randomUUID(),
-    },
-    getAccessSecret(),
-    "15m",
-  );
-
-  const refreshToken = signToken(
-    {
-      ...payload,
-      jti: randomUUID(),
-    },
-    getRefreshSecret(),
-    "7d",
-  );
-
-  return {
-    accessToken,
-    refreshToken,
-  };
-};
-
 const decodeToken = (token: string, secret: string): TokenPayload => {
   const decoded = jwt.verify(token, secret, {
     algorithms: ["HS256"],
@@ -97,6 +62,41 @@ const decodeToken = (token: string, secret: string): TokenPayload => {
     sid: decoded.sid,
     ver: decoded.ver,
     jti: decoded.jti,
+  };
+};
+
+export const generateTokenPair = (
+  userId: string,
+  sessionId: string,
+  tokenVersion: number,
+): AuthTokens => {
+  const payload: TokenPayload = {
+    sub: userId,
+    sid: sessionId,
+    ver: tokenVersion,
+  };
+
+  const accessToken = signToken(
+    {
+      ...payload,
+      jti: randomUUID(),
+    },
+    getAccessSecret(),
+    "15m",
+  );
+  
+  const refreshToken = signToken(
+    {
+      ...payload,
+      jti: randomUUID(),
+    },
+    getRefreshSecret(),
+    "7d",
+  );
+  
+  return {
+    accessToken,
+    refreshToken,
   };
 };
 

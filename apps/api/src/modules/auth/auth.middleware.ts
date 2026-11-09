@@ -1,9 +1,9 @@
 import type { Request, Response, NextFunction } from "express";
 
-import { getAccessTokenFromCookies } from "../utils/cookie.utils.js";
-import { authenticateAccessToken } from "../services/authentication.service.js";
-import { ApiError } from "../../../errors/api-error.js";
-import { ErrorCode } from "../../../errors/error-code.js";
+import { getAccessTokenFromCookies } from "./utils/cookie.utils.js";
+import { authenticateAccessToken } from "./auth.service.js";
+import { ApiError } from "../../errors/api-error.js";
+import { ErrorCode } from "../../errors/error-code.js";
 
 export const authenticate = async (
   req: Request,

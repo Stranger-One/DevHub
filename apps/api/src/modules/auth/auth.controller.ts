@@ -1,5 +1,6 @@
+import { ApiError } from "../../errors/api-error.js";
+import { ErrorCode } from "../../errors/error-code.js";
 import type { Request, Response, NextFunction } from "express";
-
 import {
   loginWithEmail,
   refreshSession,
@@ -8,15 +9,95 @@ import {
   getAuthenticatedUser,
   sendForgotPasswordOtp,
   verifyResetPassword,
-} from "../services/authentication.service.js";
-
+  registerWithEmail,
+  resendRegistrationOTP,
+  completeEmailRegistration,
+} from "./auth.service.js";
 import {
   setAuthCookies,
   clearAuthCookies,
   getRefreshTokenFromCookies,
-} from "../utils/cookie.utils.js";
-import { ApiError } from "../../../errors/api-error.js";
-import { ErrorCode } from "../../../errors/error-code.js";
+} from "./utils/cookie.utils.js";
+
+// Controller functions for authentication routes
+export const register = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const body = req.body;
+    const userId = await registerWithEmail(body);
+
+    res.status(201).json({
+      success: true,
+      message: "Registration started. Please verify your email.",
+      data: {
+        user: {
+          id: userId,
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resendRegistrationOtp = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const body = req.body;
+
+    await resendRegistrationOTP(body.id);
+
+    res.status(200).json({
+      success: true,
+      message: "A new verification code has been sent.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const completeRegistration = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const body = req.body;
+
+    const result = await completeEmailRegistration(body, {
+      ip: req.ip,
+      userAgent: req.get("user-agent"),
+    });
+
+    setAuthCookies(res, result.tokens);
+
+    const user = result.user.toObject();
+
+    delete user.passwordHash;
+
+    res.status(201).json({
+      success: true,
+      message: "Registration completed successfully",
+      data: {
+        user: {
+          id: user._id,
+          email: user.email,
+          username: user.username,
+          role: user.role,
+          emailVerified: user.emailVerified,
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const login = async (
   req: Request,

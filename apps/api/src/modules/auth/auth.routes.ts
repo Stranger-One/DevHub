@@ -1,10 +1,5 @@
 import { Router } from "express";
 import {
-  register,
-  resendRegistrationOtp,
-  completeRegistration,
-} from "./controllers/registration.controller.js";
-import {
   completeRegistrationSchema,
   forgotPasswordSchema,
   loginSchema,
@@ -14,15 +9,18 @@ import {
 } from "./auth.validation.js";
 import { validate } from "../../middleware/validate.middleware.js";
 import {
+  completeRegistration,
   forgotPassword,
   getMe,
   login,
   logout,
   logoutAll,
   refresh,
+  register,
+  resendRegistrationOtp,
   resetPassword,
-} from "./controllers/auth.controller.js";
-import { authenticate } from "./middlewares/authenticate.middleware.js";
+} from "./auth.controller.js";
+import { authenticate } from "./auth.middleware.js";
 
 const authRouter: Router = Router();
 

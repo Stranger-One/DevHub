@@ -1,12 +1,14 @@
 import { InferSchemaType, model, Schema } from "mongoose";
 
 export const USER_ROLES = ["developer", "client"] as const;
-
-export type UserRole = (typeof USER_ROLES)[number];
-
+export const ACCOUNT_STATUS = ["active", "suspended", "deleted"] as const;
 export const SOCIAL_PROVIDERS = ["email", "google", "github"] as const;
 
+export type UserRole = (typeof USER_ROLES)[number];
+export type AccountStatus = (typeof ACCOUNT_STATUS)[number];
 export type SocialProvider = (typeof SOCIAL_PROVIDERS)[number];
+
+
 
 // Connected OAuth identities
 const authProviderSchema = new Schema(
@@ -46,7 +48,6 @@ const userSchema = new Schema(
       match: /^[a-z0-9_]+$/,
     },
 
-    // Optional for social-only accounts.
     passwordHash: {
       type: String,
       select: false,
@@ -63,55 +64,16 @@ const userSchema = new Schema(
       default: false,
     },
 
+    accountStatus:{
+      type: String,
+      enum: ACCOUNT_STATUS,
+      default: "active",
+    },
+
     authProviders: {
       type: [authProviderSchema],
       default: [],
-    },
-
-    profile: {
-      displayName: {
-        type: String,
-        trim: true,
-        maxlength: 80,
-      },
-
-      bio: {
-        type: String,
-        trim: true,
-        maxlength: 500,
-      },
-
-      avatarUrl: {
-        type: String,
-        trim: true,
-      },
-
-      location: {
-        type: String,
-        trim: true,
-        maxlength: 100,
-      },
-
-      skills: {
-        type: [String],
-        default: [],
-      },
-
-      website: {
-        type: String,
-        trim: true,
-      },
-
-      githubUrl: {
-        type: String,
-        trim: true,
-      },
-
-      linkedinUrl: {
-        type: String,
-        trim: true,
-      },
-    },
+    }
   },
   {
     timestamps: true,
