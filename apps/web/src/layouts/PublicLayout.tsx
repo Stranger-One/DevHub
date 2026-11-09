@@ -16,7 +16,7 @@ export function PublicLayout() {
             <span className="grid size-8 place-items-center rounded-[10px] bg-primary text-sm font-extrabold text-white shadow-[0_0_24px_rgba(145,75,255,0.28)]">
               D
             </span>{" "}
-            devhub
+            DevHub
           </Link>
           <nav
             className="hidden items-center gap-6 text-sm text-text-muted lg:flex"

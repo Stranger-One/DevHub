@@ -16,6 +16,7 @@ DevHub is a developer collaboration and workspace product. Its visual
 style is:
 
 -   Dark, premium, minimal, and technical.
+-   Linux theme.
 -   Near-black surfaces with subtle purple ambient lighting.
 -   Bright violet as the primary action color.
 -   Purple-to-pink-to-cyan gradients for high-emphasis brand moments.
@@ -435,8 +436,7 @@ Suggested semantic token names:
 -   `warning`
 -   `error`
 
-The exact mapping depends on the project's Tailwind version and existing
-setup.
+The exact mapping depends on the Tailwind version 4 and existing setup.
 
 ## 12. Preferred frontend libraries
 

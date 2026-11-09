@@ -10,7 +10,7 @@ export function AuthLayout() {
         <span className="grid size-8 place-items-center rounded-[10px] bg-primary text-sm font-extrabold text-white">
           D
         </span>{" "}
-        devhub
+        DevHub
       </Link>
       <section className="relative w-full max-w-[460px] rounded-[18px] border border-border bg-surface p-6 shadow-[0_20px_80px_rgba(0,0,0,0.3)] sm:p-8">
         <Outlet />

@@ -9,7 +9,6 @@ import { RegisterPage } from "../pages/auth/RegisterPage";
 import { ForgotPasswordPage } from "../pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "../pages/auth/ResetPasswordPage";
 import VarifyEmailPage from "../pages/auth/VarifyEmailPage";
-import { OnboardingPage } from "../pages/shared/OnboardingPage";
 import { SettingsPage } from "../pages/shared/SettingsPage";
 import { MessagesPage } from "../pages/shared/MessagesPage";
 import { NotificationsPage } from "../pages/shared/NotificationsPage";
@@ -23,6 +22,7 @@ import { useAppDispatch } from "./hooks";
 import { LoadingScreen } from "../components/feedback/LoadingScreen";
 import { fetchCurrentUser } from "../features/auth/authThunk";
 import { logger } from "../services/logger/logger";
+import { DashboardLayout } from "../layouts/DashboardLayout";
 
 function Page({ title }: { title: string }) {
   return <PlaceholderPage title={title} />;
@@ -147,10 +147,12 @@ export function AppRouter() {
 
         {/* Any authenticated user */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/onboarding" element={<OnboardingPage />} />
-          <Route path="/settings/*" element={<SettingsRoutes />} />
-          <Route path="/messages/*" element={<MessagesRoutes />} />
-          <Route path="/notifications" element={<NotificationsPage />} />
+          <Route element={<DashboardLayout />}>
+            {/* <Route path="/onboarding" element={<OnboardingPage />} /> */}
+            <Route path="/settings/*" element={<SettingsRoutes />} />
+            <Route path="/messages/*" element={<MessagesRoutes />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
+          </Route>
         </Route>
 
         {/* Developer-only */}
