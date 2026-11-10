@@ -5,6 +5,7 @@ import { ClientProfileModel } from "./client-profile.model.js";
 import { ClientProfileCreateInput, ClientProfileUpdateInput } from "./client-profile.validation.js";
 import { ApiError } from "../../../errors/api-error.js";
 import { ErrorCode } from "../../../errors/error-code.js";
+import { calculateClientCompletion } from "./client-profile.completion.js";
 
 const verifyClientAccount = async (userId: string) => {
   if (!Types.ObjectId.isValid(userId)) {
@@ -49,9 +50,12 @@ export const getMyClientProfile = async (userId: string) => {
     };
   }
 
+  const profileCompletion =  calculateClientCompletion(profile);
+
   return {
     profileExists: true,
     profile,
+    profileCompletion,
     onboardingStatus: profile.onboardingStatus.status,
   };
 };

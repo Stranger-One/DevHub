@@ -3,6 +3,7 @@ import { profileErrors } from "../profile.errors.js";
 import { UserModel } from "../../users/user.model.js";
 import { DeveloperProfileModel } from "./developer-profile.model.js";
 import { DeveloperProfileUpdateInput } from "./developer-profile.validation.js";
+import { calculateDeveloperCompletion } from "./developer-profile.completion.js";
 
 
 const verifyDeveloperAccount = async (userId: string) => {
@@ -39,9 +40,12 @@ export const getMyDeveloperProfile = async (userId: string) => {
     };
   }
 
+  const profileCompletion = calculateDeveloperCompletion(profile);
+
   return {
     profileExists: true,
     profile,
+    profileCompletion,
     onboardingStatus: profile.onboardingStatus.status,
   };
 };
