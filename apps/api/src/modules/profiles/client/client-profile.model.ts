@@ -2,7 +2,6 @@ import {
   HydratedDocument,
   InferSchemaType,
   model,
-  models,
   Schema,
 } from "mongoose";
 
@@ -229,6 +228,7 @@ export type ClientProfile = InferSchemaType<typeof clientProfileSchema>;
 export type ClientProfileDocument = HydratedDocument<ClientProfile>;
 
 // Prevent model recompilation during development hot reload
-export const ClientProfileModel =
-  models.ClientProfile ??
-  model<ClientProfile>("ClientProfile", clientProfileSchema);
+export const ClientProfileModel = model<ClientProfile>(
+  "ClientProfile",
+  clientProfileSchema,
+);

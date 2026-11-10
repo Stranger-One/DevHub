@@ -1,6 +1,6 @@
 import mongoose, { Types } from "mongoose";
 import { timingSafeEqual } from "node:crypto";
-import { UserModel } from "../users/user.model.js";
+import { UserModel, UserRole } from "../users/user.model.js";
 import { ApiError } from "../../errors/api-error.js";
 import { ErrorCode } from "../../errors/error-code.js";
 import { SessionModel } from "./models/session.model.js";
@@ -233,6 +233,7 @@ export const completeEmailRegistration = async (
 
       const tokens = generateTokenPair(
         user._id.toString(),
+        user.role,
         sessionId.toString(),
         tokenVersion,
       );
@@ -321,6 +322,7 @@ export const loginWithEmail = async (
 
   const tokens = generateTokenPair(
     user._id.toString(),
+    user.role,
     sessionId.toString(),
     tokenVersion,
   );
@@ -418,8 +420,8 @@ export const refreshSession = async (
 
   const nextVersion = session.tokenVersion + 1;
 
-  const tokens = generateTokenPair(payload.sub, payload.sid, nextVersion);
-
+  const tokens = generateTokenPair(payload.sub, payload.role, payload.sid, nextVersion);
+  
   const updatedSession = await SessionModel.findOneAndUpdate(
     {
       _id: session._id,
@@ -509,7 +511,12 @@ export const logoutAllSessions = async (userId: string): Promise<void> => {
 
 export const authenticateAccessToken = async (
   accessToken: string,
-): Promise<{ userId: string; sessionId: string; tokenVersion: number }> => {
+): Promise<{
+  userId: string;
+  role: UserRole;
+  sessionId: string;
+  tokenVersion: number;
+}> => {
   let payload;
 
   try {
@@ -547,6 +554,7 @@ export const authenticateAccessToken = async (
 
   return {
     userId: payload.sub,
+    role: payload.role,
     sessionId: payload.sid,
     tokenVersion: payload.ver,
   };

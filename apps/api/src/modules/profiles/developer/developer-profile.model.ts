@@ -2,7 +2,6 @@ import {
   HydratedDocument,
   InferSchemaType,
   model,
-  models,
   Schema,
   Types,
 } from "mongoose";
@@ -89,7 +88,7 @@ const educationSchema = new Schema(
       maxlength: 1000,
     },
   },
-  { timestamps: false },
+  { timestamps: false , _id: false},
 );
 
 // Experience subdocument
@@ -133,7 +132,7 @@ const experienceSchema = new Schema(
       maxlength: 2000,
     },
   },
-  { timestamps: false },
+  { timestamps: false, _id: false },
 );
 
 // Onboarding state
@@ -302,6 +301,7 @@ export type DeveloperProfile = InferSchemaType<typeof developerProfileSchema>;
 export type DeveloperProfileDocument = HydratedDocument<DeveloperProfile>;
 
 // Prevent model recompilation during development hot reload
-export const DeveloperProfileModel =
-  models.DeveloperProfile ??
-  model<DeveloperProfile>("DeveloperProfile", developerProfileSchema);
+export const DeveloperProfileModel = model<DeveloperProfile>(
+  "DeveloperProfile",
+  developerProfileSchema,
+);

@@ -1,6 +1,7 @@
 import jwt, { type JwtPayload, type SignOptions } from "jsonwebtoken";
 import { createHmac, randomUUID } from "node:crypto";
 import type { AuthTokens, TokenPayload } from "../auth.types.js";
+import { UserRole } from "../../users/user.model.js";
 
 const getAccessSecret = (): string => {
   const secret = process.env.ACCESS_TOKEN_SECRET;
@@ -59,6 +60,7 @@ const decodeToken = (token: string, secret: string): TokenPayload => {
 
   return {
     sub: decoded.sub,
+    role: decoded.role,
     sid: decoded.sid,
     ver: decoded.ver,
     jti: decoded.jti,
@@ -67,6 +69,7 @@ const decodeToken = (token: string, secret: string): TokenPayload => {
 
 export const generateTokenPair = (
   userId: string,
+  role: UserRole,
   sessionId: string,
   tokenVersion: number,
 ): AuthTokens => {
@@ -74,6 +77,7 @@ export const generateTokenPair = (
     sub: userId,
     sid: sessionId,
     ver: tokenVersion,
+    role,
   };
 
   const accessToken = signToken(
@@ -84,7 +88,7 @@ export const generateTokenPair = (
     getAccessSecret(),
     "15m",
   );
-  
+
   const refreshToken = signToken(
     {
       ...payload,
@@ -93,7 +97,7 @@ export const generateTokenPair = (
     getRefreshSecret(),
     "7d",
   );
-  
+
   return {
     accessToken,
     refreshToken,

@@ -14,17 +14,15 @@ export const authenticate = async (
     const accessToken = getAccessTokenFromCookies(req.cookies);
 
     if (!accessToken) {
-      next(
-        new ApiError("Authentication required", 401, {
-          code: ErrorCode.AUTHENTICATION_ERROR,
-        }),
-      );
-      return;
+      throw new ApiError("Authentication required", 401, {
+        code: ErrorCode.AUTHENTICATION_ERROR,
+        description: "You must be Logged In to access this resource.",
+      });
     }
 
     const auth = await authenticateAccessToken(accessToken);
 
-    res.locals.auth = auth;
+    req.user = auth;
 
     next();
   } catch (error) {

@@ -8,6 +8,7 @@ export interface TokenPayload {
   sid: string;
   ver: number;
   jti?: string;
+  role: UserRole;
 }
 
 export interface AuthenticatedUser {

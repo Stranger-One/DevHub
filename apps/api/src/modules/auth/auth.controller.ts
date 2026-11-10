@@ -18,6 +18,7 @@ import {
   clearAuthCookies,
   getRefreshTokenFromCookies,
 } from "./utils/cookie.utils.js";
+import { AuthenticatedRequest } from "../../types/authenticated-request.js";
 
 // Controller functions for authentication routes
 export const register = async (
@@ -210,12 +211,12 @@ export const logoutAll = async (
 };
 
 export const getMe = async (
-  _req: Request,
+  req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const { userId } = res.locals.auth as { userId: string };
+    const { userId } = req.user as { userId: string };
 
     const user = await getAuthenticatedUser(userId);
 

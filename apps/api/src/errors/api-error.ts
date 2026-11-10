@@ -42,7 +42,7 @@ export class ApiError extends Error {
     this.name = "ApiError";
     this.statusCode = statusCode;
     this.description =
-      options.description ?? DEFAULT_DESCRIPTIONS[options.code];
+      options.description ?? ""
     this.code = options.code;
     this.errors = options.errors ?? [];
 
