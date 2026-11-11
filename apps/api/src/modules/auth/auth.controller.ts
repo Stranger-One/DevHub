@@ -189,12 +189,12 @@ export const logout = async (
 };
 
 export const logoutAll = async (
-  _req: Request,
+  req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const { userId } = res.locals.auth as { userId: string };
+    const { userId } = req.user!;
 
     await logoutAllSessions(userId);
 
@@ -210,12 +210,12 @@ export const logoutAll = async (
 };
 
 export const getMe = async (
-  _req: Request,
+  req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const { userId } = res.locals.auth as { userId: string };
+    const { userId } = req.user!;
 
     const user = await getAuthenticatedUser(userId);
 

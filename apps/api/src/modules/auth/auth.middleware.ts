@@ -24,7 +24,7 @@ export const authenticate = async (
 
     const auth = await authenticateAccessToken(accessToken);
 
-    res.locals.auth = auth;
+    req.user = auth;
 
     next();
   } catch (error) {

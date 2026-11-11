@@ -82,7 +82,7 @@ export const generateTokenPair = (
       jti: randomUUID(),
     },
     getAccessSecret(),
-    "15m",
+    "1h",
   );
   
   const refreshToken = signToken(

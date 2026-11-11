@@ -13,7 +13,7 @@ export interface TokenPayload {
 export interface AuthenticatedUser {
   userId: string;
   sessionId: string;
-  role: UserRole;
+  role?: UserRole;
 }
 
 export interface AuthTokens {
@@ -48,7 +48,6 @@ export interface OAuthIdentity {
   avatarUrl?: string;
 }
 
-
 export interface RegisterInput {
   email: string;
   password: string;
@@ -82,4 +81,3 @@ export interface DeviceInfo {
   ip?: string;
   userAgent?: string;
 }
-

@@ -18,7 +18,7 @@ const cookieBaseOptions: CookieOptions = {
 const accessCookieOptions: CookieOptions = {
   ...cookieBaseOptions,
   path: "/",
-  maxAge: 15 * 60 * 1000,
+  maxAge: 60 * 60 * 1000,
 };
 
 const refreshCookieOptions: CookieOptions = {
