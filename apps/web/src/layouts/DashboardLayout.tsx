@@ -106,24 +106,6 @@ export function DashboardLayout() {
 
   const renderProfile = (mobile = false) => (
     <div className={`border-t border-border pt-4 mt-4`}>
-      {/* <button
-        className={`group mb-3 flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-text-muted transition-all hover:bg-surface-hover hover:text-text-primary ${
-          !mobile && !isExpanded ? "justify-center" : ""
-        }`}
-        onClick={mobile ? handleMobileLogout : handleLogout}
-        type="button"
-        title={!mobile && !isExpanded ? "Log out" : undefined}
-      >
-        <LogOut
-          size={17}
-          className="shrink-0 transition-transform duration-300 group-hover:-translate-x-0.5"
-        />
-        <span
-          className={`whitespace-nowrap transition-all duration-300 ${mobile || isExpanded ? "translate-x-0 opacity-100" : "-translate-x-2 opacity-0"}`}
-        >
-          Log out
-        </span>
-      </button> */}
       <button
         type="button"
         onClick={mobile ? handleMobileLogout : handleLogout}
@@ -133,13 +115,14 @@ export function DashboardLayout() {
           <LogOut size={20} strokeWidth={1.8} className="" />
         </span>
         <span
-          className={`transition-all duration-300 whitespace-nowrap ${isExpanded ? "translate-x-0 opacity-100" : "-translate-x-2 opacity-0"}`}
+          className={`transition-all duration-300 whitespace-nowrap ${mobile || isExpanded ? "translate-x-0 opacity-100" : "-translate-x-2 opacity-0"}`}
         >
           Log out
         </span>
       </button>
 
-      <div
+      <Link
+        to={`/profile/${user?.id}`}
         className={`flex items-center gap-3 rounded-xl px-3 py-3 ${!mobile && !isExpanded ? "justify-center px-1" : ""}`}
       >
         <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary-soft text-sm font-bold text-accent-purple ring-1 ring-border-strong transition-transform duration-300 hover:scale-105">
@@ -155,13 +138,13 @@ export function DashboardLayout() {
             {user?.role ?? "Member"}
           </span>
         </div>
-      </div>
+      </Link>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-background text-text-primary md:flex">
-      <div className="flex items-center justify-between border-b border-border bg-surface px-4 py-3 md:hidden">
+    <div className="min-h-screen bg-background text-text-primary">
+      <div className="fixed inset-x-0 top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-surface px-4 py-3 md:hidden">
         <Link to="/" className="flex items-center gap-2 text-lg font-bold">
           <span className="grid size-8 place-items-center rounded-[10px] bg-primary text-sm font-extrabold text-white ">
             D
@@ -185,7 +168,7 @@ export function DashboardLayout() {
       />
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[min(19rem,88vw)] flex-col border-r border-border bg-surface px-4 py-5 shadow-2xl transition-transform duration-300 md:static md:z-auto md:h-screen md:w-20 md:shrink-0 md:translate-x-0 md:overflow-hidden md:px-3 md:shadow-none md:transition-[width,padding] md:duration-300 ${isMobileOpen ? "translate-x-0" : "-translate-x-full"} ${isExpanded ? "md:w-64 md:px-5" : ""}`}
+        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-[min(19rem,88vw)] flex-col overflow-y-auto border-r border-border bg-surface px-4 py-5 shadow-2xl transition-[transform,width,padding] duration-300 md:w-20 md:translate-x-0 md:overflow-hidden md:px-3 md:shadow-none ${isMobileOpen ? "translate-x-0" : "-translate-x-full"} ${isExpanded ? "md:w-64 md:px-5" : ""}`}
         onMouseEnter={() => dispatch(setSidebarPinned(true))}
         // onMouseLeave={() => dispatch(setSidebarPinned(false))}
       >
@@ -218,16 +201,14 @@ export function DashboardLayout() {
           <X size={18} />
         </button>
 
-        {isExpanded && (
-          <button
-            aria-label="Close workspace navigation"
-            className="absolute right-5 top-5 size-9 cursor-pointer place-items-center rounded-xl text-text-muted hover:bg-surface-hover hover:text-text-primary hidden md:grid"
-            onClick={() => dispatch(setSidebarPinned(false))}
-            type="button"
-          >
-            <ChevronsLeft size={20} />
-          </button>
-        )}
+        <button
+          aria-label="Close workspace navigation"
+          className={`absolute right-5 top-5 size-9 transition-all duration-500 ease-in-out cursor-pointer place-items-center rounded-xl text-text-muted hover:bg-surface-hover hover:text-text-primary hidden md:grid ${isExpanded ? "opacity-100 block" : "opacity-0 hidden"}`}
+          onClick={() => dispatch(setSidebarPinned(false))}
+          type="button"
+        >
+          <ChevronsLeft size={20} />
+        </button>
 
         <div
           className={`relative mb-3 mt-10 flex items-center gap-3 overflow-hidden px-3 text-sm font-medium transition-all ease-in-out duration-500`}
@@ -246,16 +227,20 @@ export function DashboardLayout() {
           </span>
         </div>
 
-        <div className="hidden md:block">{renderNavigation()}</div>
+        <div className="flex flex-col justify-between w-full h-full">
+          <div className="hidden md:block">{renderNavigation()}</div>
+          <div className="hidden md:block">{renderProfile()}</div>
 
-        <div className="hidden md:block">{renderProfile()}</div>
-        <div className="md:hidden">
-          {renderNavigation(true)}
-          {renderProfile(true)}
+          <div className="md:hidden">
+            {renderNavigation(true)}
+            {renderProfile(true)}
+          </div>
         </div>
       </aside>
 
-      <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-10">
+      <main
+        className={`h-screen transition-all duration-300 ease-in-out w-full overflow-y-auto px-4 pb-4 pt-20 sm:px-6 sm:pb-6 sm:pt-20 md:py-6 md:pr-6 md:pl-20 lg:py-10 lg:pr-10 ${isExpanded ? "md:pl-64" : ""}`}
+      >
         <Outlet />
       </main>
     </div>

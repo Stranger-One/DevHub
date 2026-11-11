@@ -8,7 +8,7 @@ export function PlaceholderPage({
   description?: string;
 }) {
   return (
-    <section className="mx-auto flex min-h-[60vh] max-w-[1160px] flex-col items-start justify-center px-6 py-20 lg:px-8">
+    <section className="mx-auto flex min-h-[150vh] max-w-290 flex-col items-start px-6 py-20 lg:px-8">
       <span className="mb-4 text-[0.6875rem] font-bold tracking-[0.16em] text-accent-purple">
         DEVHUB WORKSPACE
       </span>

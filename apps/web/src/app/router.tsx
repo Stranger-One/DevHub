@@ -46,6 +46,15 @@ function SettingsRoutes() {
     </Routes>
   );
 }
+function ProfileRoutes(){
+  return (
+    <Routes>
+      <Route index element={<Page title="Profile" />} />
+      <Route path="/:id" element={<Page title="Profile" />} />
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
+  );
+}
 function StaticPublicPage({ title }: { title: string }) {
   return <Page title={title} />;
 }
@@ -149,6 +158,7 @@ export function AppRouter() {
         <Route element={<ProtectedRoute />}>
           <Route element={<DashboardLayout />}>
             {/* <Route path="/onboarding" element={<OnboardingPage />} /> */}
+            <Route path="/profile/*" element={<ProfileRoutes />} />
             <Route path="/settings/*" element={<SettingsRoutes />} />
             <Route path="/messages/*" element={<MessagesRoutes />} />
             <Route path="/notifications" element={<NotificationsPage />} />
