@@ -91,7 +91,7 @@ const updateProfile = async (
   const profile = await DeveloperProfileModel.findOneAndUpdate(
     { userId },
     { $set: update },
-    { new: true, runValidators: true },
+    { returnDocument: 'after', runValidators: true },
   );
   if (!profile) throw notFound();
   return profile;
@@ -130,7 +130,7 @@ const addSection = async (
   const profile = await DeveloperProfileModel.findOneAndUpdate(
     { userId },
     { $push: { [section]: input } },
-    { new: true, runValidators: true },
+    { returnDocument: 'after', runValidators: true },
   );
   if (!profile) throw notFound();
   return profile;
@@ -153,7 +153,7 @@ const updateSection = async (
         ]),
       ),
     },
-    { new: true, runValidators: true },
+    { returnDocument: 'after', runValidators: true },
   );
   if (!profile) throw notFound();
   return profile;
@@ -167,7 +167,7 @@ const deleteSection = async (
   const profile = await DeveloperProfileModel.findOneAndUpdate(
     { userId, [`${section}._id`]: itemId },
     { $pull: { [section]: { _id: itemId } } },
-    { new: true },
+    { returnDocument: 'after' },
   );
   if (!profile) throw notFound();
   return profile;

@@ -23,6 +23,7 @@ import { LoadingScreen } from "../components/feedback/LoadingScreen";
 import { fetchCurrentUser } from "../features/auth/authThunk";
 import { logger } from "../services/logger/logger";
 import { DashboardLayout } from "../layouts/DashboardLayout";
+import ProfilePage from "../pages/shared/ProfilePage";
 
 function Page({ title }: { title: string }) {
   return <PlaceholderPage title={title} />;
@@ -46,11 +47,11 @@ function SettingsRoutes() {
     </Routes>
   );
 }
-function ProfileRoutes(){
+function ProfileRoutes() {
   return (
     <Routes>
-      <Route index element={<Page title="Profile" />} />
-      <Route path="/:id" element={<Page title="Profile" />} />
+      <Route index element={<ProfilePage />} />
+      <Route path="/:id" element={<ProfilePage />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
