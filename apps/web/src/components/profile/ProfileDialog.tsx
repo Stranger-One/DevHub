@@ -1,12 +1,15 @@
 import { X } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useForm, type SubmitHandler } from "react-hook-form";
 
 export type ProfileField = {
   name: string;
   label: string;
-  value: string;
+  value?: string | boolean;
+  type?: "text" | "date" | "url" | "select" | "checkbox";
+  options?: { label: string; value: string }[];
   multiline?: boolean;
   placeholder?: string;
+  required?: boolean;
 };
 
 type ProfileDialogProps = {
@@ -14,8 +17,9 @@ type ProfileDialogProps = {
   description: string;
   fields: ProfileField[];
   open: boolean;
+  submitLabel?: string;
   onClose: () => void;
-  onSave: (values: Record<string, string>) => void;
+  onSave: (values: Record<string, string | boolean>) => void;
 };
 
 export function ProfileDialog({
@@ -23,20 +27,30 @@ export function ProfileDialog({
   description,
   fields,
   open,
+  submitLabel = "Save changes",
   onClose,
   onSave,
 }: ProfileDialogProps) {
-  const [values, setValues] = useState<Record<string, string>>(() =>
-    Object.fromEntries(fields.map((field) => [field.name, field.value])),
-  );
-
-  if (!open) return null;
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<Record<string, string | boolean>>({
+    defaultValues: Object.fromEntries(
+      fields.map((field) => [
+        field.name,
+        field.value ?? (field.type === "checkbox" ? false : ""),
+      ]),
+    ),
+  });
+  const onSubmit: SubmitHandler<Record<string, string | boolean>> = (
+    values,
+  ) => {
     onSave(values);
     onClose();
   };
+
+  if (!open) return null;
 
   return (
     <div
@@ -45,7 +59,7 @@ export function ProfileDialog({
       onMouseDown={onClose}
     >
       <div
-        className="max-h-[min(760px,92vh)] w-full max-w-xl overflow-y-auto rounded-2xl border border-border-strong bg-surface-raised shadow-2xl"
+        className="max-h-[min(800px,92vh)] w-full max-w-xl overflow-y-auto rounded-2xl border border-border-strong bg-surface-raised shadow-2xl"
         role="dialog"
         aria-modal="true"
         aria-labelledby="profile-dialog-title"
@@ -69,41 +83,80 @@ export function ProfileDialog({
             <X size={18} />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4 p-5 sm:p-6">
-          {fields.map((field) => (
-            <label
-              key={field.name}
-              className="block text-sm font-medium text-text-secondary"
-            >
-              {field.label}
-              {field.multiline ? (
-                <textarea
-                  value={values[field.name] ?? ""}
-                  onChange={(event) =>
-                    setValues((current) => ({
-                      ...current,
-                      [field.name]: event.target.value,
-                    }))
-                  }
-                  placeholder={field.placeholder}
-                  rows={4}
-                  className="mt-2 w-full resize-y rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-primary"
-                />
-              ) : (
-                <input
-                  value={values[field.name] ?? ""}
-                  onChange={(event) =>
-                    setValues((current) => ({
-                      ...current,
-                      [field.name]: event.target.value,
-                    }))
-                  }
-                  placeholder={field.placeholder}
-                  className="mt-2 w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-primary"
-                />
-              )}
-            </label>
-          ))}
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4 p-5 sm:p-6"
+        >
+          {fields.map((field) => {
+            const fieldError = errors[field.name];
+            if (field.type === "checkbox") {
+              return (
+                <label
+                  key={field.name}
+                  className="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-surface px-3 py-3 text-sm text-text-secondary"
+                >
+                  <input
+                    type="checkbox"
+                    {...register(field.name)}
+                    className="size-4 accent-[var(--color-primary)]"
+                  />
+                  {field.label}
+                </label>
+              );
+            }
+            return (
+              <label
+                key={field.name}
+                className="block text-sm font-medium text-text-secondary"
+              >
+                {field.label}
+                {field.type === "select" ? (
+                  <select
+                    {...register(field.name, {
+                      required: field.required
+                        ? `${field.label} is required`
+                        : false,
+                    })}
+                    className="mt-2 w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text-primary outline-none focus:border-primary"
+                  >
+                    <option value="">Select {field.label.toLowerCase()}</option>
+                    {field.options?.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : field.multiline ? (
+                  <textarea
+                    {...register(field.name, {
+                      required: field.required
+                        ? `${field.label} is required`
+                        : false,
+                    })}
+                    placeholder={field.placeholder}
+                    rows={4}
+                    className="mt-2 w-full resize-y rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-primary"
+                  />
+                ) : (
+                  <input
+                    type={field.type ?? "text"}
+                    {...register(field.name, {
+                      required: field.required
+                        ? `${field.label} is required`
+                        : false,
+                    })}
+                    placeholder={field.placeholder}
+                    className="mt-2 w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-primary"
+                  />
+                )}
+                {fieldError && (
+                  <span className="mt-1 block text-xs text-error">
+                    {String(fieldError.message)}
+                  </span>
+                )}
+              </label>
+            );
+          })}
           <div className="flex justify-end gap-3 border-t border-border pt-5">
             <button
               type="button"
@@ -116,7 +169,7 @@ export function ProfileDialog({
               type="submit"
               className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover"
             >
-              Save changes
+              {submitLabel}
             </button>
           </div>
         </form>

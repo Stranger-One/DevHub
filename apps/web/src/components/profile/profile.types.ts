@@ -13,6 +13,7 @@ export type ProfileIntroduction = {
     country: string;
     state: string;
     city: string;
+    postalCode?: string;
   };
   firstName: string;
   lastName: string;
@@ -23,8 +24,8 @@ export type ProfileIntroduction = {
 export type ProfileEducation = {
   _id: string;
   institution: string;
-  degree: string;
-  fieldOfStudy: string;
+  degree?: string;
+  fieldOfStudy?: string;
   startDate: string;
   endDate?: string;
   currentlyStudying: boolean;
@@ -35,10 +36,15 @@ export type ProfileExperience = {
   _id: string;
   company: string;
   position: string;
-  employmentType: string;
-  location: string;
-  workingType: string;
-  startDate: string;
+  employmentType?:
+    | "full-time"
+    | "part-time"
+    | "contract"
+    | "freelance"
+    | "internship";
+  location?: string;
+  workingType?: "remote" | "on-site" | "hybrid";
+  startDate?: string;
   endDate?: string;
   currentlyWorking: boolean;
   description: string;
@@ -50,6 +56,7 @@ export type ProfileCertification = {
   name: string;
   issuingOrganization: string;
   issueDate: string;
+  expirationDate?: string;
   doesNotExpire: boolean;
   credentialId?: string;
   credentialUrl?: string;

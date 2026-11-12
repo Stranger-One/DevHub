@@ -3,6 +3,7 @@ import {
   Code2,
   Globe2,
   MapPin,
+  Pencil,
   Plus,
   Sparkles,
 } from "lucide-react";
@@ -151,25 +152,55 @@ type DialogState = {
   title: string;
   description: string;
   fields: ProfileField[];
-  save: (values: Record<string, string>) => void;
+  submitLabel?: string;
+  save: (values: Record<string, string | boolean>) => void;
 } | null;
-const years = (startDate: string, endDate?: string, current?: boolean) =>
-  `${new Date(startDate).getFullYear()} - ${current ? "Present" : endDate ? new Date(endDate).getFullYear() : ""}`;
+const years = (startDate?: string, endDate?: string, current?: boolean) =>
+  startDate
+    ? `${new Date(startDate).getFullYear()} - ${current ? "Present" : endDate ? new Date(endDate).getFullYear() : ""}`
+    : "";
 const dateLabel = (date: string) =>
-  new Date(date).toLocaleDateString("en-US", {
-    month: "short",
-    year: "numeric",
-  });
+  date
+    ? new Date(date).toLocaleDateString("en-US", {
+        month: "short",
+        year: "numeric",
+      })
+    : "";
 const fieldsFor = (
-  values: Partial<Record<string, string>>,
-  fields: [string, string, boolean?][],
+  values: Partial<Record<string, string | boolean>>,
+  fields: [
+    string,
+    string,
+    ProfileField["type"]?,
+    ProfileField["options"]?,
+    boolean?,
+    boolean?,
+  ][],
 ): ProfileField[] =>
-  fields.map(([name, label, multiline]) => ({
+  fields.map(([name, label, type, options, required, multiline]) => ({
     name,
     label,
-    value: values[name] ?? "",
+    value: values[name] ?? (type === "checkbox" ? false : ""),
+    type,
+    options,
     multiline,
+    required: required === true && type !== "checkbox",
   }));
+
+const employmentOptions = [
+  "full-time",
+  "part-time",
+  "contract",
+  "freelance",
+  "internship",
+].map((value) => ({ label: value.replace("-", " "), value }));
+const workingOptions = ["remote", "on-site", "hybrid"].map((value) => ({
+  label: value,
+  value,
+}));
+const pronounOptions = ["he/him", "she/her", "they/them", "other"].map(
+  (value) => ({ label: value, value }),
+);
 
 export default function ProfilePage() {
   const { id } = useParams();
@@ -189,12 +220,20 @@ export default function ProfilePage() {
           lastName: profile.introduction.lastName,
           pronouns: profile.introduction.pronouns,
           headline: profile.introduction.headline,
+          country: profile.introduction.location.country,
+          state: profile.introduction.location.state,
+          city: profile.introduction.location.city,
+          postalCode: profile.introduction.location.postalCode,
         },
         [
-          ["firstName", "First name"],
-          ["lastName", "Last name"],
-          ["pronouns", "Pronouns"],
-          ["headline", "Headline", true],
+          ["firstName", "First name", "text", undefined, true],
+          ["lastName", "Last name", "text", undefined, true],
+          ["pronouns", "Pronouns", "select", pronounOptions],
+          ["headline", "Headline", "text", undefined, true, true],
+          ["country", "Country"],
+          ["state", "State / province"],
+          ["city", "City"],
+          ["postalCode", "Postal code"],
         ],
       ),
       save: (values) =>
@@ -202,10 +241,18 @@ export default function ProfilePage() {
           ...current,
           introduction: {
             ...current.introduction,
-            firstName: values.firstName,
-            lastName: values.lastName,
-            pronouns: values.pronouns,
-            headline: values.headline,
+            firstName: String(values.firstName),
+            lastName: String(values.lastName),
+            pronouns: String(
+              values.pronouns,
+            ) as typeof current.introduction.pronouns,
+            headline: String(values.headline),
+            location: {
+              country: String(values.country),
+              state: String(values.state),
+              city: String(values.city),
+              postalCode: String(values.postalCode),
+            },
           },
         })),
     });
@@ -219,7 +266,7 @@ export default function ProfilePage() {
           specialties: profile.about.specialties.join(", "),
         },
         [
-          ["description", "Description", true],
+          ["description", "Description", "text", undefined, true, true],
           ["specialties", "Specialties (comma separated)"],
         ],
       ),
@@ -227,8 +274,8 @@ export default function ProfilePage() {
         setProfile((current) => ({
           ...current,
           about: {
-            description: values.description,
-            specialties: values.specialties
+            description: String(values.description),
+            specialties: String(values.specialties)
               .split(",")
               .map((item) => item.trim())
               .filter(Boolean),
@@ -245,132 +292,215 @@ export default function ProfilePage() {
       save: (values) =>
         setProfile((current) => ({
           ...current,
-          skills: values.skills
+          skills: String(values.skills)
             .split(",")
             .map((item) => item.trim())
             .filter(Boolean),
         })),
     });
-  const openEducationEditor = () =>
+  const openEducationEditor = (item?: (typeof profile.education)[number]) =>
     setDialog({
-      title: "Add education",
+      title: item ? "Update education" : "Add education",
       description: "Add a school, program, or course of study.",
-      fields: fieldsFor({}, [
-        ["institution", "Institution"],
-        ["degree", "Degree"],
-        ["fieldOfStudy", "Field of study"],
-        ["startDate", "Start year"],
-        ["endDate", "End year"],
-        ["description", "Description", true],
-      ]),
+      submitLabel: item ? "Update education" : undefined,
+      fields: fieldsFor(
+        item
+          ? {
+              institution: item.institution,
+              degree: item.degree,
+              fieldOfStudy: item.fieldOfStudy,
+              startDate: item.startDate,
+              endDate: item.endDate,
+              currentlyStudying: item.currentlyStudying,
+              description: item.description,
+            }
+          : {},
+        [
+          ["institution", "Institution", "text", undefined, true],
+          ["degree", "Degree"],
+          ["fieldOfStudy", "Field of study"],
+          ["startDate", "Start date", "date", undefined, true],
+          ["endDate", "End date", "date"],
+          ["currentlyStudying", "Currently studying", "checkbox"],
+          ["description", "Description", "text"],
+        ],
+      ),
       save: (values) =>
         setProfile((current) => ({
           ...current,
-          education: [
-            ...current.education,
-            {
-              _id: crypto.randomUUID(),
-              institution: values.institution,
-              degree: values.degree,
-              fieldOfStudy: values.fieldOfStudy,
-              startDate: values.startDate,
-              endDate: values.endDate,
-              currentlyStudying: false,
-              description: values.description,
-            },
-          ],
+          education: item
+            ? current.education.map((entry) =>
+                entry._id === item._id
+                  ? {
+                      ...entry,
+                      institution: String(values.institution),
+                      degree: String(values.degree),
+                      fieldOfStudy: String(values.fieldOfStudy),
+                      startDate: String(values.startDate),
+                      endDate: String(values.endDate),
+                      currentlyStudying: Boolean(values.currentlyStudying),
+                      description: String(values.description),
+                    }
+                  : entry,
+              )
+            : [
+                ...current.education,
+                {
+                  _id: crypto.randomUUID(),
+                  institution: String(values.institution),
+                  degree: String(values.degree),
+                  fieldOfStudy: String(values.fieldOfStudy),
+                  startDate: String(values.startDate),
+                  endDate: String(values.endDate),
+                  currentlyStudying: Boolean(values.currentlyStudying),
+                  description: String(values.description),
+                },
+              ],
         })),
     });
-  const openExperienceEditor = () =>
+  const openExperienceEditor = (item?: (typeof profile.experience)[number]) =>
     setDialog({
-      title: "Add experience",
+      title: item ? "Update experience" : "Add experience",
       description: "Showcase a role, contract, or meaningful project.",
-      fields: fieldsFor({}, [
-        ["company", "Company"],
-        ["position", "Position"],
-        ["employmentType", "Employment type"],
-        ["location", "Location"],
-        ["workingType", "Working arrangement"],
-        ["startDate", "Start year"],
-        ["description", "Description", true],
-        ["skills", "Skills (comma separated)"],
-      ]),
+      submitLabel: item ? "Update experience" : undefined,
+      fields: fieldsFor(
+        item ? { ...item, skills: item.skills.join(", ") } : {},
+        [
+          ["company", "Company", "text", undefined, true],
+          ["position", "Position", "text", undefined, true],
+          ["employmentType", "Employment type", "select", employmentOptions],
+          ["location", "Location"],
+          ["workingType", "Working arrangement", "select", workingOptions],
+          ["startDate", "Start date", "date"],
+          ["endDate", "End date", "date"],
+          ["currentlyWorking", "Currently working", "checkbox"],
+          ["description", "Description", "text"],
+          ["skills", "Skills (comma separated)"],
+        ],
+      ),
       save: (values) =>
-        setProfile((current) => ({
-          ...current,
-          experience: [
-            ...current.experience,
-            {
-              _id: crypto.randomUUID(),
-              company: values.company,
-              position: values.position,
-              employmentType: values.employmentType,
-              location: values.location,
-              workingType: values.workingType,
-              startDate: values.startDate,
-              currentlyWorking: false,
-              description: values.description,
-              skills: values.skills
-                .split(",")
-                .map((item) => item.trim())
-                .filter(Boolean),
-            },
-          ],
-        })),
+        setProfile((current) => {
+          const next = {
+            _id: item?._id ?? crypto.randomUUID(),
+            company: String(values.company),
+            position: String(values.position),
+            employmentType: String(
+              values.employmentType,
+            ) as (typeof profile.experience)[number]["employmentType"],
+            location: String(values.location),
+            workingType: String(
+              values.workingType,
+            ) as (typeof profile.experience)[number]["workingType"],
+            startDate: String(values.startDate),
+            endDate: String(values.endDate),
+            currentlyWorking: Boolean(values.currentlyWorking),
+            description: String(values.description),
+            skills: String(values.skills)
+              .split(",")
+              .map((entry) => entry.trim())
+              .filter(Boolean),
+          };
+          return {
+            ...current,
+            experience: item
+              ? current.experience.map((entry) =>
+                  entry._id === item._id ? next : entry,
+                )
+              : [...current.experience, next],
+          };
+        }),
     });
-  const openCertificationEditor = () =>
+  const openCertificationEditor = (
+    item?: (typeof profile.certifications)[number],
+  ) =>
     setDialog({
-      title: "Add certification",
+      title: item ? "Update certification" : "Add certification",
       description: "Add a credential that supports your expertise.",
-      fields: fieldsFor({}, [
-        ["name", "Certification name"],
-        ["issuingOrganization", "Issuing organization"],
-        ["issueDate", "Issue year"],
-        ["credentialId", "Credential ID"],
-        ["credentialUrl", "Credential URL"],
-        ["skills", "Skills (comma separated)"],
-      ]),
-      save: (values) =>
-        setProfile((current) => ({
-          ...current,
-          certifications: [
-            ...current.certifications,
-            {
-              _id: crypto.randomUUID(),
-              name: values.name,
-              issuingOrganization: values.issuingOrganization,
-              issueDate: values.issueDate,
-              doesNotExpire: true,
-              credentialId: values.credentialId,
-              credentialUrl: values.credentialUrl,
-              skills: values.skills
-                .split(",")
-                .map((item) => item.trim())
-                .filter(Boolean),
-              media: [],
-            },
+      submitLabel: item ? "Update certification" : undefined,
+      fields: fieldsFor(
+        item
+          ? {
+              name: item.name,
+              issuingOrganization: item.issuingOrganization,
+              issueDate: item.issueDate,
+              expirationDate: item.expirationDate,
+              doesNotExpire: item.doesNotExpire,
+              credentialId: item.credentialId,
+              credentialUrl: item.credentialUrl,
+              skills: item.skills.join(", "),
+            }
+          : {},
+        [
+          ["name", "Certification name", "text", undefined, true],
+          [
+            "issuingOrganization",
+            "Issuing organization",
+            "text",
+            undefined,
+            true,
           ],
-        })),
+          ["issueDate", "Issue date", "date", undefined, true],
+          ["expirationDate", "Expiration date", "date"],
+          ["doesNotExpire", "Does not expire", "checkbox"],
+          ["credentialId", "Credential ID"],
+          ["credentialUrl", "Credential URL", "url"],
+          ["skills", "Skills (comma separated)"],
+        ],
+      ),
+      save: (values) =>
+        setProfile((current) => {
+          const next = {
+            _id: item?._id ?? crypto.randomUUID(),
+            name: String(values.name),
+            issuingOrganization: String(values.issuingOrganization),
+            issueDate: String(values.issueDate),
+            expirationDate: String(values.expirationDate),
+            doesNotExpire: Boolean(values.doesNotExpire),
+            credentialId: String(values.credentialId),
+            credentialUrl: String(values.credentialUrl),
+            skills: String(values.skills)
+              .split(",")
+              .map((entry) => entry.trim())
+              .filter(Boolean),
+            media: item?.media ?? [],
+          };
+          return {
+            ...current,
+            certifications: item
+              ? current.certifications.map((entry) =>
+                  entry._id === item._id ? next : entry,
+                )
+              : [...current.certifications, next],
+          };
+        }),
     });
 
   return (
-    <div className="mx-auto max-w-[1180px] pb-10">
+    <div className="mx-auto max-w-295 pb-10">
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
         <main className="min-w-0 space-y-5">
           <section className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_12px_36px_rgba(0,0,0,0.12)]">
             <div className="h-36 bg-[linear-gradient(115deg,#23133e_0%,#341a5a_44%,#123c4e_100%)] sm:h-48">
-              <img
-                src={profile.introduction.coverImage.url}
-                alt=""
-                className="h-full w-full object-cover opacity-60 mix-blend-screen"
-              />
+              {profile.introduction.coverImage.url && (
+                <img
+                  src={profile.introduction.coverImage.url}
+                  alt=""
+                  className="h-full w-full object-cover opacity-60 mix-blend-screen"
+                />
+              )}
             </div>
             <div className="relative px-5 pb-5 sm:px-7 sm:pb-7">
-              <img
-                src={profile.introduction.profilePicture.url}
-                alt={fullName}
-                className="-mt-14 size-28 rounded-full border-4 border-surface object-cover shadow-xl sm:-mt-16 sm:size-32"
-              />
+              {profile.introduction.profilePicture.url ? (
+                <img
+                  src={profile.introduction.profilePicture.url}
+                  alt={fullName}
+                  className="-mt-14 size-28 rounded-full border-4 border-surface object-cover shadow-xl sm:-mt-16 sm:size-32"
+                />
+              ) : (
+                <div className="-mt-14 grid size-28 place-items-center rounded-full border-4 border-surface bg-primary-soft text-3xl font-bold text-accent-purple shadow-xl sm:-mt-16 sm:size-32">
+                  {fullName.slice(0, 1)}
+                </div>
+              )}
               <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -482,6 +612,15 @@ export default function ProfilePage() {
                         </span>
                       ))}
                     </div>
+                    {isOwner && (
+                      <button
+                        type="button"
+                        onClick={() => openExperienceEditor(item)}
+                        className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-accent-cyan hover:text-text-primary"
+                      >
+                        <Pencil size={13} /> Update experience
+                      </button>
+                    )}
                   </div>
                 </div>
               </article>
@@ -519,6 +658,15 @@ export default function ProfilePage() {
                       {item.description}
                     </p>
                   )}
+                  {isOwner && (
+                    <button
+                      type="button"
+                      onClick={() => openEducationEditor(item)}
+                      className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-accent-cyan hover:text-text-primary"
+                    >
+                      <Pencil size={13} /> Update education
+                    </button>
+                  )}
                 </div>
               </article>
             ))}
@@ -554,6 +702,20 @@ export default function ProfilePage() {
                     >
                       Show credential <ExternalLink size={13} />
                     </a>
+                  )}
+                  {item.expirationDate && !item.doesNotExpire && (
+                    <p className="mt-1 text-xs text-text-muted">
+                      Expires {dateLabel(item.expirationDate)}
+                    </p>
+                  )}
+                  {isOwner && (
+                    <button
+                      type="button"
+                      onClick={() => openCertificationEditor(item)}
+                      className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-accent-cyan hover:text-text-primary"
+                    >
+                      <Pencil size={13} /> Update certification
+                    </button>
                   )}
                 </div>
               </article>
@@ -629,6 +791,7 @@ export default function ProfilePage() {
           title={dialog.title}
           description={dialog.description}
           fields={dialog.fields}
+          submitLabel={dialog.submitLabel}
           open
           onClose={() => setDialog(null)}
           onSave={dialog.save}
