@@ -54,7 +54,7 @@ export function ProfileDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[70] grid place-items-center bg-black/70 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-70 grid place-items-center bg-black/70 p-4 backdrop-blur-sm"
       role="presentation"
       onMouseDown={onClose}
     >
@@ -98,7 +98,7 @@ export function ProfileDialog({
                   <input
                     type="checkbox"
                     {...register(field.name)}
-                    className="size-4 accent-[var(--color-primary)]"
+                    className="size-4 accent-primary"
                   />
                   {field.label}
                 </label>
