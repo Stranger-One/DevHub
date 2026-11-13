@@ -417,21 +417,23 @@ export default function ProfilePage() {
           </ProfileSection>
         </main>
 
-        <aside className="space-y-5">
-          {isOwner && <ProfileSection title="Profile strength">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-text-secondary">Complete profile</span>
-              <strong className="text-accent-emerald">
-                {profile.completionPercentage}%
-              </strong>
-            </div>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-hover">
-              <div
-                className="h-full rounded-full bg-accent-emerald"
-                style={{ width: `${profile.completionPercentage}%` }}
-              />
-            </div>
-          </ProfileSection>}
+        <aside className="sticky top-0 h-fit self-start space-y-5">
+          {isOwner && (
+            <ProfileSection title="Profile strength">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-text-secondary">Complete profile</span>
+                <strong className="text-accent-emerald">
+                  {profile.completionPercentage}%
+                </strong>
+              </div>
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-hover">
+                <div
+                  className="h-full rounded-full bg-accent-emerald"
+                  style={{ width: `${profile.completionPercentage}%` }}
+                />
+              </div>
+            </ProfileSection>
+          )}
           <ProfileSection title="Contact & links">
             <div className="space-y-3">
               {profile.socialLinks.map((link) => (
