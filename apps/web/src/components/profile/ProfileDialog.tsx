@@ -64,7 +64,6 @@ export function ProfileDialog({
   const onSubmit: SubmitHandler<Record<string, string | boolean>> = (
     values,
   ) => {
-    console.log("Values: ", values);
     onSave(values);
     onClose();
   };
@@ -104,7 +103,7 @@ export function ProfileDialog({
         </div>
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="space-y-2 p-5 sm:p-6 grid grid-cols-3 gap-x-4 "
+          className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-3 sm:p-6"
         >
           {children}
           {fields.map((field) => {

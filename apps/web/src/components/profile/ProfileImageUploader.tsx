@@ -17,10 +17,12 @@ export function ProfileImageUploader({
   onChange,
 }: ProfileImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState(value);
-    const [progress, setProgress] = useState(0);
-    const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState<string>();
+  const [removed, setRemoved] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [loading, setLoading] = useState(false);
   const selectImage = () => inputRef.current?.click();
+  const visiblePreview = removed ? undefined : (preview ?? value);
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -37,23 +39,31 @@ export function ProfileImageUploader({
       return;
     }
 
-    setPreview(URL.createObjectURL(file));
+    const localPreview = URL.createObjectURL(file);
+    setPreview(localPreview);
+    setRemoved(false);
+    setProgress(0);
     setLoading(true);
 
     try {
       const result = await uploadMedia(file, "image", setProgress);
       onChange(result.secure_url, result.public_id);
-      toast.success("Profile photo uploaded!");
+      toast.success(`${label} uploaded`);
     } catch (error) {
       console.error("Upload failed:", error);
-      toast.error("Unable to upload profile photo");
+      setPreview(undefined);
+      setRemoved(false);
+      toast.error(`Unable to upload ${label.toLowerCase()}`);
     } finally {
       setLoading(false);
+      URL.revokeObjectURL(localPreview);
+      event.target.value = "";
     }
   };
 
   const removeImage = () => {
     setPreview(undefined);
+    setRemoved(true);
     onChange("", "");
   };
 
@@ -70,14 +80,29 @@ export function ProfileImageUploader({
             className="hidden"
             onChange={handleUpload}
           />
-          {preview ? (
-            <img src={preview} alt="" className="h-full w-full object-cover" />
+          {visiblePreview ? (
+            <img
+              src={visiblePreview}
+              alt=""
+              className="h-full w-full object-cover"
+            />
           ) : (
             <ImagePlus size={19} className="text-accent-purple" />
           )}
         </div>
         {loading ? (
-          <p>Uploading: {progress}%</p>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center justify-between text-xs text-text-secondary">
+              <span>Uploading {label.toLowerCase()}</span>
+              <span>{progress}%</span>
+            </div>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-hover">
+              <div
+                className="h-full rounded-full bg-accent-cyan transition-[width]"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
         ) : (
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-text-primary">{label}</p>
@@ -90,11 +115,12 @@ export function ProfileImageUploader({
             type="button"
             onClick={selectImage}
             aria-label={preview ? `Change ${label}` : `Add ${label}`}
-            className="grid size-9 place-items-center rounded-lg text-text-muted hover:bg-surface-hover hover:text-text-primary"
+            disabled={loading}
+            className="grid size-9 place-items-center rounded-lg text-text-muted hover:bg-surface-hover hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Upload size={16} />
           </button>
-          {preview && (
+          {visiblePreview && (
             <button
               type="button"
               onClick={removeImage}

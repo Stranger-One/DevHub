@@ -9,15 +9,15 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { LoadingScreen } from "../../components/feedback/LoadingScreen";
-import {
-  ProfileDialog,
-  type ProfileField,
-} from "../../components/profile/ProfileDialog";
-import { ProfileImageUploader } from "../../components/profile/ProfileImageUploader";
+import { AboutEditor } from "../../components/profile/AboutEditor";
+import { CertificationEditor } from "../../components/profile/CertificationEditor";
+import { EducationEditor } from "../../components/profile/EducationEditor";
+import { ExperienceEditor } from "../../components/profile/ExperienceEditor";
+import { IntroductionEditor } from "../../components/profile/IntroductionEditor";
 import { ProfileSection } from "../../components/profile/ProfileSection";
+import { SkillsEditor } from "../../components/profile/SkillsEditor";
 import {
   selectProfile,
   selectProfileError,
@@ -40,37 +40,11 @@ import {
   updateIntroduction,
   updateSkills,
 } from "../../features/profile/profileThunk";
-import type {
-  ProfileCertification,
-  ProfileEducation,
-  ProfileExperience,
-} from "../../features/profile/profile.types";
 
-type DialogState = {
-  title: string;
-  description: string;
-  fields: ProfileField[];
-  submitLabel?: string;
-  save: (values: Record<string, string | boolean>) => void;
-} | null;
+type EditorState =
+  | { type: "introduction" | "about" | "skills" }
+  | { type: "education" | "experience" | "certification"; itemId?: string };
 
-const options = (values: string[]) =>
-  values.map((value) => ({ label: value.replace("-", " "), value }));
-
-const employmentOptions = options([
-  "full-time",
-  "part-time",
-  "contract",
-  "freelance",
-  "internship",
-]);
-const workingOptions = options(["remote", "on-site", "hybrid"]);
-const pronounOptions = options(["he/him", "she/her", "they/them", "other"]);
-
-const text = (values: Record<string, string | boolean>, key: string) =>
-  String(values[key] ?? "");
-const checked = (values: Record<string, string | boolean>, key: string) =>
-  Boolean(values[key]);
 const dateLabel = (date?: string) =>
   date
     ? new Date(date).toLocaleDateString("en-US", {
@@ -78,38 +52,12 @@ const dateLabel = (date?: string) =>
         year: "numeric",
       })
     : "";
+
 const years = (start?: string, end?: string, current?: boolean) =>
   start
     ? `${new Date(start).getFullYear()} - ${current ? "Present" : end ? new Date(end).getFullYear() : ""}`
     : "";
 
-const fieldsFor = (
-  values: Record<string, string | boolean>,
-  fields: [
-    string,
-    string,
-    ProfileField["type"]?,
-    ProfileField["options"]?,
-    boolean?,
-    boolean?,
-    number?,
-  ][],
-): ProfileField[] =>
-  fields.map(
-    ([name, label, type, fieldOptions, required, multiline, span]) => ({
-      name,
-      label,
-      type,
-      options: fieldOptions,
-      value: values[name] ?? (type === "checkbox" ? false : ""),
-      required,
-      multiline,
-      span,
-    }),
-  );
-
-// ===============
-// ===============
 export default function ProfilePage() {
   const { id } = useParams();
   const dispatch = useAppDispatch();
@@ -118,17 +66,7 @@ export default function ProfilePage() {
   const fetchStatus = useAppSelector(selectProfileFetchStatus);
   const error = useAppSelector(selectProfileError);
 
-  const [dialog, setDialog] = useState<DialogState>(null);
-  const [imageDrafts, setImageDrafts] = useState<{
-    profile?: {
-      url: string;
-      publicId: string;
-    };
-    cover?: {
-      url: string;
-      publicId: string;
-    };
-  }>({});
+  const [editor, setEditor] = useState<EditorState | null>(null);
 
   const isOwner = id === user?.id;
 
@@ -136,372 +74,12 @@ export default function ProfilePage() {
     if (id) void dispatch(fetchProfile(id));
   }, [dispatch, id, isOwner]);
 
-  const openIntroductionEditor = () => {
-    if (!profile) return;
-    const intro = profile.introduction;
-    setDialog({
-      title: "Edit introduction",
-      description: "Update your headline and location.",
-      fields: fieldsFor(
-        {
-          firstName: intro.firstName,
-          lastName: intro.lastName,
-          pronouns: intro.pronouns,
-          headline: intro.headline,
-          country: intro.location.country,
-          state: intro.location.state,
-          city: intro.location.city,
-          postalCode: intro.location.postalCode ?? "",
-        },
-        [
-          ["firstName", "First name", "text", undefined, true, false, 1],
-          ["lastName", "Last name", "text", undefined, true, false, 1],
-          ["pronouns", "Pronouns", "select", pronounOptions, false, false, 1],
-          ["headline", "Headline", "text", undefined, true, true, 3],
-          ["country", "Country", "text", undefined, false, false, 1],
-          ["state", "State / province", "text", undefined, false, false, 1],
-          ["city", "City", "text", undefined, false, false, 1],
-          ["postalCode", "Postal code", "text", undefined, false, false, 1],
-        ],
-      ),
-      save: (values) => {
-        void dispatch(
-          updateIntroduction({
-            firstName: text(values, "firstName"),
-            lastName: text(values, "lastName"),
-            pronouns: text(values, "pronouns") as typeof intro.pronouns,
-            headline: text(values, "headline"),
-            profilePicture: imageDrafts.profile
-              ? {
-                  url: imageDrafts.profile.url,
-                  publicId: imageDrafts.profile.publicId ?? "profile-picture",
-                }
-              : intro.profilePicture,
-            coverImage: imageDrafts.cover
-              ? {
-                  url: imageDrafts.cover.url,
-                  publicId: imageDrafts.cover.publicId ?? "cover-image",
-                }
-              : intro.coverImage,
-            location: {
-              country: text(values, "country"),
-              state: text(values, "state"),
-              city: text(values, "city"),
-              postalCode: text(values, "postalCode"),
-            },
-          }),
-        );
-      },
-    });
-  };
-
-  const openAboutEditor = () => {
-    if (!profile) return;
-    setDialog({
-      title: "Edit about",
-      description: "Tell people what kind of work you do best.",
-      fields: fieldsFor(
-        {
-          description: profile.about.description,
-          specialties: profile.about.specialties.join(", "),
-        },
-        [
-          ["description", "Description", "text", undefined, true, true, 3],
-          [
-            "specialties",
-            "Specialties (comma separated)",
-            "text",
-            undefined,
-            false,
-            false,
-            3,
-          ],
-        ],
-      ),
-      save: (values) => {
-        void dispatch(
-          updateAbout({
-            description: text(values, "description"),
-            specialties: text(values, "specialties")
-              .split(",")
-              .map((item) => item.trim())
-              .filter(Boolean),
-          }),
-        );
-      },
-    });
-  };
-  const openSkillsEditor = () => {
-    if (!profile) return;
-    setDialog({
-      title: "Edit skills",
-      description: "Add the skills you want to be discovered for.",
-      fields: fieldsFor({ skills: profile.skills.join(", ") }, [
-        [
-          "skills",
-          "Skills (comma separated)",
-          "text",
-          undefined,
-          false,
-          false,
-          3,
-        ],
-      ]),
-      save: (values) => {
-        void dispatch(
-          updateSkills(
-            text(values, "skills")
-              .split(",")
-              .map((item) => item.trim())
-              .filter(Boolean),
-          ),
-        );
-      },
-    });
-  };
-
-  const openEducationEditor = (item?: ProfileEducation) =>
-    setDialog({
-      title: item ? "Update education" : "Add education",
-      description: "Add a school, program, or course of study.",
-      submitLabel: item ? "Update education" : undefined,
-      fields: fieldsFor(
-        item
-          ? {
-              institution: item.institution,
-              degree: item.degree ?? "",
-              fieldOfStudy: item.fieldOfStudy ?? "",
-              startDate: item.startDate,
-              endDate: item.endDate ?? "",
-              currentlyStudying: item.currentlyStudying,
-              description: item.description ?? "",
-            }
-          : {},
-        [
-          ["institution", "Institution", "text", undefined, true, false, 1],
-          ["degree", "Degree", "text", undefined, false, false, 1],
-          [
-            "fieldOfStudy",
-            "Field of study",
-            "text",
-            undefined,
-            false,
-            false,
-            1,
-          ],
-          ["startDate", "Start date", "date", undefined, true, false, 1],
-          ["endDate", "End date", "date", undefined, false, false, 1],
-          ["_", "_", "space", undefined, false, false, 1],
-          [
-            "currentlyStudying",
-            "Currently studying",
-            "checkbox",
-            undefined,
-            false,
-            false,
-            1,
-          ],
-          ["description", "Description", "text", undefined, false, true, 3],
-        ],
-      ),
-      save: (values) => {
-        const input = {
-          institution: text(values, "institution"),
-          degree: text(values, "degree"),
-          fieldOfStudy: text(values, "fieldOfStudy"),
-          startDate: text(values, "startDate"),
-          endDate: text(values, "endDate") || undefined,
-          currentlyStudying: checked(values, "currentlyStudying"),
-          description: text(values, "description"),
-        };
-        if (item) void dispatch(updateEducation({ id: item._id, input }));
-        else void dispatch(addEducation(input));
-      },
-    });
-
-  const openExperienceEditor = (item?: ProfileExperience) =>
-    setDialog({
-      title: item ? "Update experience" : "Add experience",
-      description: "Showcase a role, contract, or meaningful project.",
-      submitLabel: item ? "Update experience" : undefined,
-      fields: fieldsFor(
-        item
-          ? {
-              company: item.company,
-              position: item.position,
-              employmentType: item.employmentType ?? "",
-              location: item.location ?? "",
-              workingType: item.workingType ?? "",
-              startDate: item.startDate ?? "",
-              endDate: item.endDate ?? "",
-              currentlyWorking: item.currentlyWorking,
-              description: item.description,
-              skills: item.skills.join(", "),
-            }
-          : {},
-        [
-          ["company", "Company", "text", undefined, true, false, 1],
-          ["position", "Position", "text", undefined, true, false, 1],
-          ["location", "Location", "text", undefined, false, false, 1],
-          [
-            "employmentType",
-            "Employment type",
-            "select",
-            employmentOptions,
-            false,
-            false,
-            1,
-          ],
-          [
-            "workingType",
-            "Working arrangement",
-            "select",
-            workingOptions,
-            false,
-            false,
-            1,
-          ],
-          ["_", "_", "space", undefined, false, false, 1],
-          ["startDate", "Start date", "date", undefined, true, false, 1],
-          ["endDate", "End date", "date", undefined, false, false, 1],
-          ["_", "_", "space", undefined, false, false, 1],
-          [
-            "currentlyWorking",
-            "Currently working",
-            "checkbox",
-            undefined,
-            false,
-            false,
-            1,
-          ],
-          ["description", "Description", "text", undefined, false, true, 3],
-          [
-            "skills",
-            "Skills (comma separated)",
-            "text",
-            undefined,
-            false,
-            false,
-            3,
-          ],
-        ],
-      ),
-      save: (values) => {
-        const input = {
-          company: text(values, "company"),
-          position: text(values, "position"),
-          employmentType: text(
-            values,
-            "employmentType",
-          ) as ProfileExperience["employmentType"],
-          location: text(values, "location"),
-          workingType: text(
-            values,
-            "workingType",
-          ) as ProfileExperience["workingType"],
-          startDate: text(values, "startDate") || undefined,
-          endDate: text(values, "endDate") || undefined,
-          currentlyWorking: checked(values, "currentlyWorking"),
-          description: text(values, "description"),
-          skills: text(values, "skills")
-            .split(",")
-            .map((item) => item.trim())
-            .filter(Boolean),
-        };
-        if (item) void dispatch(updateExperience({ id: item._id, input }));
-        else void dispatch(addExperience(input));
-      },
-    });
-
-  const openCertificationEditor = (item?: ProfileCertification) =>
-    setDialog({
-      title: item ? "Update certification" : "Add certification",
-      description: "Add a credential that supports your expertise.",
-      submitLabel: item ? "Update certification" : undefined,
-      fields: fieldsFor(
-        item
-          ? {
-              name: item.name,
-              issuingOrganization: item.issuingOrganization,
-              issueDate: item.issueDate,
-              expirationDate: item.expirationDate ?? "",
-              doesNotExpire: item.doesNotExpire,
-              credentialId: item.credentialId ?? "",
-              credentialUrl: item.credentialUrl ?? "",
-              skills: item.skills.join(", "),
-            }
-          : {},
-        [
-          ["name", "Certification name", "text", undefined, true, false, 1],
-          [
-            "issuingOrganization",
-            "Issuing organization",
-            "text",
-            undefined,
-            true,
-            false,
-            1,
-          ],
-          ["_", "_", "space", undefined, false, false, 1],
-          ["issueDate", "Issue date", "date", undefined, true, false, 1],
-          [
-            "expirationDate",
-            "Expiration date",
-            "date",
-            undefined,
-            false,
-            false,
-            1,
-          ],
-          [
-            "doesNotExpire",
-            "Does not expire",
-            "checkbox",
-            undefined,
-            false,
-            false,
-            1,
-          ],
-          ["credentialId", "Credential ID", "text", undefined, false, false, 1],
-          [
-            "credentialUrl",
-            "Credential URL",
-            "url",
-            undefined,
-            false,
-            false,
-            1,
-          ],
-          [
-            "skills",
-            "Skills (comma separated)",
-            "text",
-            undefined,
-            false,
-            false,
-            3,
-          ],
-        ],
-      ),
-      save: (values) => {
-        const input = {
-          name: text(values, "name"),
-          issuingOrganization: text(values, "issuingOrganization"),
-          issueDate: text(values, "issueDate"),
-          expirationDate: text(values, "expirationDate") || undefined,
-          doesNotExpire: checked(values, "doesNotExpire"),
-          credentialId: text(values, "credentialId"),
-          credentialUrl: text(values, "credentialUrl") || undefined,
-          skills: text(values, "skills")
-            .split(",")
-            .map((item) => item.trim())
-            .filter(Boolean),
-          media: item?.media ?? [],
-        };
-        if (item) void dispatch(updateCertification({ id: item._id, input }));
-        else void dispatch(addCertification(input));
-      },
-    });
+  const openEditor = (type: EditorState["type"], itemId?: string) =>
+    setEditor(
+      type === "introduction" || type === "about" || type === "skills"
+        ? { type }
+        : { type, itemId },
+    );
 
   if (fetchStatus === "loading" && !profile)
     return <LoadingScreen label="Loading profile..." />;
@@ -515,8 +93,7 @@ export default function ProfilePage() {
         <button
           type="button"
           onClick={() => {
-            if (isOwner) void dispatch(fetchMyProfile());
-            else if (id) void dispatch(fetchPublicProfile(id));
+            if (id) void dispatch(fetchProfile(id));
           }}
           className="mt-5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white"
         >
@@ -525,27 +102,12 @@ export default function ProfilePage() {
       </div>
     );
 
-  const updateImageDraft = (
-    kind: "profile" | "cover",
-    url: string,
-    publicId: string,
-  ) => {
-    setImageDrafts((current) => ({ ...current, [kind]: { url, publicId } }));
-    if (url)
-      toast.info(
-        "Image preview updated. A media upload endpoint is required to persist it.",
-      );
-  };
-  //   const profilePictureUrl =
-  //     imageDrafts.profile ?? profile.introduction.profilePicture.url;
-  //   const coverImageUrl =
-  //     imageDrafts.cover ?? profile.introduction.coverImage.url;
-  //   const fullName = `${profile.introduction.firstName} ${profile.introduction.lastName}`;
-
   return (
-    <div className="mx-auto max-w-[1180px] pb-10">
+    <div className="mx-auto max-w-295 pb-10">
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
         <main className="min-w-0 space-y-5">
+
+          {/* Introduction Section */}
           <section className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_12px_36px_rgba(0,0,0,0.12)]">
             <div className="h-36 bg-[linear-gradient(115deg,#23133e_0%,#341a5a_44%,#123c4e_100%)] sm:h-48">
               <img
@@ -557,14 +119,14 @@ export default function ProfilePage() {
                 className="h-full w-full object-cover opacity-60 mix-blend-screen"
               />
             </div>
-            <div className="relative px-5 pb-5 sm:px-7 sm:pb-7">
+            <div className="relative px-5 pb-5 pt-16 sm:pt-24 sm:px-7 sm:pb-7">
               <img
                 src={
                   profile.introduction.profilePicture.url ||
                   "/profile-placeholder-image-png.png"
                 }
                 alt={profile.introduction.firstName}
-                className="-mt-14 size-28 rounded-full border-4 border-surface object-cover shadow-xl sm:-mt-16 sm:size-32"
+                className="absolute top-0 left-[5%] size-28 rounded-full border-4 border-surface object-cover shadow-xl sm:size-44 -translate-y-1/2"
               />
 
               <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -590,7 +152,7 @@ export default function ProfilePage() {
                 {isOwner ? (
                   <button
                     type="button"
-                    onClick={openIntroductionEditor}
+                    onClick={() => openEditor("introduction")}
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover"
                   >
                     <Sparkles size={16} />
@@ -611,7 +173,7 @@ export default function ProfilePage() {
           {/* About Section */}
           <ProfileSection
             title="About"
-            onEdit={isOwner ? openAboutEditor : undefined}
+            onEdit={isOwner ? () => openEditor("about") : undefined}
           >
             <p className="text-sm leading-7 text-text-secondary">
               {profile.about.description}
@@ -631,7 +193,7 @@ export default function ProfilePage() {
           {/* Skills Section */}
           <ProfileSection
             title="Skills"
-            onEdit={isOwner ? openSkillsEditor : undefined}
+            onEdit={isOwner ? () => openEditor("skills") : undefined}
           >
             <div className="flex flex-wrap gap-2">
               {profile.skills.map((skill) => (
@@ -649,7 +211,7 @@ export default function ProfilePage() {
           <ProfileSection
             title="Experience"
             eyebrow={`${profile.experience.length} roles`}
-            onAdd={isOwner ? () => openExperienceEditor() : undefined}
+            onAdd={isOwner ? () => openEditor("experience") : undefined}
           >
             {profile.experience.map((item) => (
               <article
@@ -690,7 +252,7 @@ export default function ProfilePage() {
                     <div className="mt-3 flex gap-3 items-start">
                       <button
                         type="button"
-                        onClick={() => openExperienceEditor(item)}
+                        onClick={() => openEditor("experience", item._id)}
                         className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-accent-cyan"
                       >
                         <Pencil size={18} />
@@ -715,7 +277,7 @@ export default function ProfilePage() {
           <ProfileSection
             title="Education"
             eyebrow={`${profile.education.length} schools`}
-            onAdd={isOwner ? () => openEducationEditor() : undefined}
+            onAdd={isOwner ? () => openEditor("education") : undefined}
           >
             {profile.education.map((item) => (
               <article
@@ -745,24 +307,24 @@ export default function ProfilePage() {
                     </p>
                   )}
                 </div>
-                  {isOwner && (
-                    <div className="mt-3 flex gap-3 items-start">
-                      <button
-                        type="button"
-                        onClick={() => openEducationEditor(item)}
-                        className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-accent-cyan"
-                      >
-                        <Pencil size={18} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void dispatch(deleteEducation(item._id))}
-                        className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-error"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  )}
+                {isOwner && (
+                  <div className="mt-3 flex gap-3 items-start">
+                    <button
+                      type="button"
+                      onClick={() => openEditor("education", item._id)}
+                      className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-accent-cyan"
+                    >
+                      <Pencil size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void dispatch(deleteEducation(item._id))}
+                      className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-error"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                )}
               </article>
             ))}
           </ProfileSection>
@@ -770,7 +332,7 @@ export default function ProfilePage() {
           {/* Certifications Section */}
           <ProfileSection
             title="Licenses & certifications"
-            onAdd={isOwner ? () => openCertificationEditor() : undefined}
+            onAdd={isOwner ? () => openEditor("certification") : undefined}
           >
             {profile.certifications.map((item) => (
               <article
@@ -806,26 +368,26 @@ export default function ProfilePage() {
                     </a>
                   )}
                 </div>
-                  {isOwner && (
-                    <div className="mt-3 flex gap-3 items-start">
-                      <button
-                        type="button"
-                        onClick={() => openCertificationEditor(item)}
-                        className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-accent-cyan"
-                      >
-                        <Pencil size={18} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void dispatch(deleteCertification(item._id))
-                        }
-                        className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-error"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  )}
+                {isOwner && (
+                  <div className="mt-3 flex gap-3 items-start">
+                    <button
+                      type="button"
+                      onClick={() => openEditor("certification", item._id)}
+                      className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-accent-cyan"
+                    >
+                      <Pencil size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void dispatch(deleteCertification(item._id))
+                      }
+                      className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-error"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                )}
               </article>
             ))}
           </ProfileSection>
@@ -882,37 +444,84 @@ export default function ProfilePage() {
         </aside>
       </div>
 
-      {dialog && (
-        <ProfileDialog
-          key={dialog.title}
-          title={dialog.title}
-          description={dialog.description}
-          fields={dialog.fields}
-          submitLabel={dialog.submitLabel}
+      {/* INTRODUCTION EDITOR */}
+      {editor?.type === "introduction" && (
+        <IntroductionEditor
+          profile={profile.introduction}
           open
-          onClose={() => setDialog(null)}
-          onSave={dialog.save}
-        >
-          {dialog.title === "Edit introduction" && profile && (
-            <div className="mb-5 grid gap-3 sm:grid-cols-2 col-span-full">
-              <ProfileImageUploader
-                label="Profile image"
-                value={profile.introduction.profilePicture.url}
-                circular
-                onChange={(url, publicId) =>
-                  updateImageDraft("profile", url, publicId)
-                }
-              />
-              <ProfileImageUploader
-                label="Cover image"
-                value={profile.introduction.coverImage.url}
-                onChange={(url, publicId) =>
-                  updateImageDraft("cover", url, publicId)
-                }
-              />
-            </div>
+          onClose={() => setEditor(null)}
+          onSave={(input) => void dispatch(updateIntroduction(input))}
+        />
+      )}
+
+      {/* ABOUT EDITOR */}
+      {editor?.type === "about" && (
+        <AboutEditor
+          value={profile.about}
+          open
+          onClose={() => setEditor(null)}
+          onSave={(input) => void dispatch(updateAbout(input))}
+        />
+      )}
+
+      {/* SKILLS EDITOR */}
+      {editor?.type === "skills" && (
+        <SkillsEditor
+          value={profile.skills}
+          open
+          onClose={() => setEditor(null)}
+          onSave={(skills) => void dispatch(updateSkills(skills))}
+        />
+      )}
+
+      {/* EDUCATION EDITOR */}
+      {editor?.type === "education" && (
+        <EducationEditor
+          value={profile.education.find((item) => item._id === editor.itemId)}
+          open
+          onClose={() => setEditor(null)}
+          onSave={(input) => {
+            if (editor.itemId) {
+              void dispatch(updateEducation({ id: editor.itemId, input }));
+            } else {
+              void dispatch(addEducation(input));
+            }
+          }}
+        />
+      )}
+
+      {/* EXPERIENCE EDITOR */}
+      {editor?.type === "experience" && (
+        <ExperienceEditor
+          value={profile.experience.find((item) => item._id === editor.itemId)}
+          open
+          onClose={() => setEditor(null)}
+          onSave={(input) => {
+            if (editor.itemId) {
+              void dispatch(updateExperience({ id: editor.itemId, input }));
+            } else {
+              void dispatch(addExperience(input));
+            }
+          }}
+        />
+      )}
+
+      {/* CERTIFICATION EDITOR */}
+      {editor?.type === "certification" && (
+        <CertificationEditor
+          value={profile.certifications.find(
+            (item) => item._id === editor.itemId,
           )}
-        </ProfileDialog>
+          open
+          onClose={() => setEditor(null)}
+          onSave={(input) => {
+            if (editor.itemId) {
+              void dispatch(updateCertification({ id: editor.itemId, input }));
+            } else {
+              void dispatch(addCertification(input));
+            }
+          }}
+        />
       )}
     </div>
   );
