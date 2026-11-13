@@ -19,10 +19,9 @@ import {
 import { ProfileImageUploader } from "../../components/profile/ProfileImageUploader";
 import { ProfileSection } from "../../components/profile/ProfileSection";
 import {
-  selectCurrentProfile,
+  selectProfile,
   selectProfileError,
   selectProfileFetchStatus,
-  selectPublicProfile,
 } from "../../features/profile/profileSelectors";
 import {
   addCertification,
@@ -32,6 +31,7 @@ import {
   deleteEducation,
   deleteExperience,
   fetchMyProfile,
+  fetchProfile,
   fetchPublicProfile,
   updateAbout,
   updateCertification,
@@ -56,6 +56,7 @@ type DialogState = {
 
 const options = (values: string[]) =>
   values.map((value) => ({ label: value.replace("-", " "), value }));
+
 const employmentOptions = options([
   "full-time",
   "part-time",
@@ -65,6 +66,7 @@ const employmentOptions = options([
 ]);
 const workingOptions = options(["remote", "on-site", "hybrid"]);
 const pronounOptions = options(["he/him", "she/her", "they/them", "other"]);
+
 const text = (values: Record<string, string | boolean>, key: string) =>
   String(values[key] ?? "");
 const checked = (values: Record<string, string | boolean>, key: string) =>
@@ -90,37 +92,48 @@ const fieldsFor = (
     ProfileField["options"]?,
     boolean?,
     boolean?,
+    number?,
   ][],
 ): ProfileField[] =>
-  fields.map(([name, label, type, fieldOptions, required, multiline]) => ({
-    name,
-    label,
-    type,
-    options: fieldOptions,
-    value: values[name] ?? (type === "checkbox" ? false : ""),
-    required,
-    multiline,
-  }));
+  fields.map(
+    ([name, label, type, fieldOptions, required, multiline, span]) => ({
+      name,
+      label,
+      type,
+      options: fieldOptions,
+      value: values[name] ?? (type === "checkbox" ? false : ""),
+      required,
+      multiline,
+      span,
+    }),
+  );
 
+// ===============
+// ===============
 export default function ProfilePage() {
   const { id } = useParams();
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
-  const currentProfile = useAppSelector(selectCurrentProfile);
-  const publicProfile = useAppSelector(selectPublicProfile(id ?? ""));
+  const profile = useAppSelector(selectProfile);
   const fetchStatus = useAppSelector(selectProfileFetchStatus);
   const error = useAppSelector(selectProfileError);
+
   const [dialog, setDialog] = useState<DialogState>(null);
   const [imageDrafts, setImageDrafts] = useState<{
-    profile?: string;
-    cover?: string;
+    profile?: {
+      url: string;
+      publicId: string;
+    };
+    cover?: {
+      url: string;
+      publicId: string;
+    };
   }>({});
-  const isOwner = !id || id === "me" || id === user?.id;
-  const profile = isOwner ? currentProfile : publicProfile;
+
+  const isOwner = id === user?.id;
 
   useEffect(() => {
-    if (isOwner) void dispatch(fetchMyProfile());
-    else if (id) void dispatch(fetchPublicProfile(id));
+    if (id) void dispatch(fetchProfile(id));
   }, [dispatch, id, isOwner]);
 
   const openIntroductionEditor = () => {
@@ -141,14 +154,14 @@ export default function ProfilePage() {
           postalCode: intro.location.postalCode ?? "",
         },
         [
-          ["firstName", "First name", "text", undefined, true],
-          ["lastName", "Last name", "text", undefined, true],
-          ["pronouns", "Pronouns", "select", pronounOptions],
-          ["headline", "Headline", "text", undefined, true, true],
-          ["country", "Country"],
-          ["state", "State / province"],
-          ["city", "City"],
-          ["postalCode", "Postal code"],
+          ["firstName", "First name", "text", undefined, true, false, 1],
+          ["lastName", "Last name", "text", undefined, true, false, 1],
+          ["pronouns", "Pronouns", "select", pronounOptions, false, false, 1],
+          ["headline", "Headline", "text", undefined, true, true, 3],
+          ["country", "Country", "text", undefined, false, false, 1],
+          ["state", "State / province", "text", undefined, false, false, 1],
+          ["city", "City", "text", undefined, false, false, 1],
+          ["postalCode", "Postal code", "text", undefined, false, false, 1],
         ],
       ),
       save: (values) => {
@@ -158,6 +171,18 @@ export default function ProfilePage() {
             lastName: text(values, "lastName"),
             pronouns: text(values, "pronouns") as typeof intro.pronouns,
             headline: text(values, "headline"),
+            profilePicture: imageDrafts.profile
+              ? {
+                  url: imageDrafts.profile.url,
+                  publicId: imageDrafts.profile.publicId ?? "profile-picture",
+                }
+              : intro.profilePicture,
+            coverImage: imageDrafts.cover
+              ? {
+                  url: imageDrafts.cover.url,
+                  publicId: imageDrafts.cover.publicId ?? "cover-image",
+                }
+              : intro.coverImage,
             location: {
               country: text(values, "country"),
               state: text(values, "state"),
@@ -181,8 +206,16 @@ export default function ProfilePage() {
           specialties: profile.about.specialties.join(", "),
         },
         [
-          ["description", "Description", "text", undefined, true, true],
-          ["specialties", "Specialties (comma separated)"],
+          ["description", "Description", "text", undefined, true, true, 3],
+          [
+            "specialties",
+            "Specialties (comma separated)",
+            "text",
+            undefined,
+            false,
+            false,
+            3,
+          ],
         ],
       ),
       save: (values) => {
@@ -204,7 +237,15 @@ export default function ProfilePage() {
       title: "Edit skills",
       description: "Add the skills you want to be discovered for.",
       fields: fieldsFor({ skills: profile.skills.join(", ") }, [
-        ["skills", "Skills (comma separated)"],
+        [
+          "skills",
+          "Skills (comma separated)",
+          "text",
+          undefined,
+          false,
+          false,
+          3,
+        ],
       ]),
       save: (values) => {
         void dispatch(
@@ -237,13 +278,30 @@ export default function ProfilePage() {
             }
           : {},
         [
-          ["institution", "Institution", "text", undefined, true],
-          ["degree", "Degree"],
-          ["fieldOfStudy", "Field of study"],
-          ["startDate", "Start date", "date", undefined, true],
-          ["endDate", "End date", "date"],
-          ["currentlyStudying", "Currently studying", "checkbox"],
-          ["description", "Description", "text", undefined, false, true],
+          ["institution", "Institution", "text", undefined, true, false, 1],
+          ["degree", "Degree", "text", undefined, false, false, 1],
+          [
+            "fieldOfStudy",
+            "Field of study",
+            "text",
+            undefined,
+            false,
+            false,
+            1,
+          ],
+          ["startDate", "Start date", "date", undefined, true, false, 1],
+          ["endDate", "End date", "date", undefined, false, false, 1],
+          ["_", "_", "space", undefined, false, false, 1],
+          [
+            "currentlyStudying",
+            "Currently studying",
+            "checkbox",
+            undefined,
+            false,
+            false,
+            1,
+          ],
+          ["description", "Description", "text", undefined, false, true, 3],
         ],
       ),
       save: (values) => {
@@ -282,16 +340,50 @@ export default function ProfilePage() {
             }
           : {},
         [
-          ["company", "Company", "text", undefined, true],
-          ["position", "Position", "text", undefined, true],
-          ["employmentType", "Employment type", "select", employmentOptions],
-          ["location", "Location"],
-          ["workingType", "Working arrangement", "select", workingOptions],
-          ["startDate", "Start date", "date"],
-          ["endDate", "End date", "date"],
-          ["currentlyWorking", "Currently working", "checkbox"],
-          ["description", "Description", "text", undefined, false, true],
-          ["skills", "Skills (comma separated)"],
+          ["company", "Company", "text", undefined, true, false, 1],
+          ["position", "Position", "text", undefined, true, false, 1],
+          ["location", "Location", "text", undefined, false, false, 1],
+          [
+            "employmentType",
+            "Employment type",
+            "select",
+            employmentOptions,
+            false,
+            false,
+            1,
+          ],
+          [
+            "workingType",
+            "Working arrangement",
+            "select",
+            workingOptions,
+            false,
+            false,
+            1,
+          ],
+          ["_", "_", "space", undefined, false, false, 1],
+          ["startDate", "Start date", "date", undefined, true, false, 1],
+          ["endDate", "End date", "date", undefined, false, false, 1],
+          ["_", "_", "space", undefined, false, false, 1],
+          [
+            "currentlyWorking",
+            "Currently working",
+            "checkbox",
+            undefined,
+            false,
+            false,
+            1,
+          ],
+          ["description", "Description", "text", undefined, false, true, 3],
+          [
+            "skills",
+            "Skills (comma separated)",
+            "text",
+            undefined,
+            false,
+            false,
+            3,
+          ],
         ],
       ),
       save: (values) => {
@@ -340,20 +432,55 @@ export default function ProfilePage() {
             }
           : {},
         [
-          ["name", "Certification name", "text", undefined, true],
+          ["name", "Certification name", "text", undefined, true, false, 1],
           [
             "issuingOrganization",
             "Issuing organization",
             "text",
             undefined,
             true,
+            false,
+            1,
           ],
-          ["issueDate", "Issue date", "date", undefined, true],
-          ["expirationDate", "Expiration date", "date"],
-          ["doesNotExpire", "Does not expire", "checkbox"],
-          ["credentialId", "Credential ID"],
-          ["credentialUrl", "Credential URL", "url"],
-          ["skills", "Skills (comma separated)"],
+          ["_", "_", "space", undefined, false, false, 1],
+          ["issueDate", "Issue date", "date", undefined, true, false, 1],
+          [
+            "expirationDate",
+            "Expiration date",
+            "date",
+            undefined,
+            false,
+            false,
+            1,
+          ],
+          [
+            "doesNotExpire",
+            "Does not expire",
+            "checkbox",
+            undefined,
+            false,
+            false,
+            1,
+          ],
+          ["credentialId", "Credential ID", "text", undefined, false, false, 1],
+          [
+            "credentialUrl",
+            "Credential URL",
+            "url",
+            undefined,
+            false,
+            false,
+            1,
+          ],
+          [
+            "skills",
+            "Skills (comma separated)",
+            "text",
+            undefined,
+            false,
+            false,
+            3,
+          ],
         ],
       ),
       save: (values) => {
@@ -398,18 +525,22 @@ export default function ProfilePage() {
       </div>
     );
 
-  const updateImageDraft = (kind: "profile" | "cover", url: string) => {
-    setImageDrafts((current) => ({ ...current, [kind]: url }));
+  const updateImageDraft = (
+    kind: "profile" | "cover",
+    url: string,
+    publicId: string,
+  ) => {
+    setImageDrafts((current) => ({ ...current, [kind]: { url, publicId } }));
     if (url)
       toast.info(
         "Image preview updated. A media upload endpoint is required to persist it.",
       );
   };
-  const profilePictureUrl =
-    imageDrafts.profile ?? profile.introduction.profilePicture.url;
-  const coverImageUrl =
-    imageDrafts.cover ?? profile.introduction.coverImage.url;
-  const fullName = `${profile.introduction.firstName} ${profile.introduction.lastName}`;
+  //   const profilePictureUrl =
+  //     imageDrafts.profile ?? profile.introduction.profilePicture.url;
+  //   const coverImageUrl =
+  //     imageDrafts.cover ?? profile.introduction.coverImage.url;
+  //   const fullName = `${profile.introduction.firstName} ${profile.introduction.lastName}`;
 
   return (
     <div className="mx-auto max-w-[1180px] pb-10">
@@ -417,31 +548,31 @@ export default function ProfilePage() {
         <main className="min-w-0 space-y-5">
           <section className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_12px_36px_rgba(0,0,0,0.12)]">
             <div className="h-36 bg-[linear-gradient(115deg,#23133e_0%,#341a5a_44%,#123c4e_100%)] sm:h-48">
-              {coverImageUrl && (
-                <img
-                  src={coverImageUrl}
-                  alt=""
-                  className="h-full w-full object-cover opacity-60 mix-blend-screen"
-                />
-              )}
+              <img
+                src={
+                  profile.introduction.coverImage.url ||
+                  "/cover-placeholder-image.jpg"
+                }
+                alt="cover image"
+                className="h-full w-full object-cover opacity-60 mix-blend-screen"
+              />
             </div>
             <div className="relative px-5 pb-5 sm:px-7 sm:pb-7">
-              {profilePictureUrl ? (
-                <img
-                  src={profilePictureUrl}
-                  alt={fullName}
-                  className="-mt-14 size-28 rounded-full border-4 border-surface object-cover shadow-xl sm:-mt-16 sm:size-32"
-                />
-              ) : (
-                <div className="-mt-14 grid size-28 place-items-center rounded-full border-4 border-surface bg-primary-soft text-3xl font-bold text-accent-purple shadow-xl sm:-mt-16 sm:size-32">
-                  {fullName.slice(0, 1)}
-                </div>
-              )}
+              <img
+                src={
+                  profile.introduction.profilePicture.url ||
+                  "/profile-placeholder-image-png.png"
+                }
+                alt={profile.introduction.firstName}
+                className="-mt-14 size-28 rounded-full border-4 border-surface object-cover shadow-xl sm:-mt-16 sm:size-32"
+              />
+
               <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <h1 className="text-2xl font-bold tracking-[-0.03em] sm:text-3xl">
-                      {fullName}
+                      {profile.introduction.firstName}{" "}
+                      {profile.introduction.lastName}
                     </h1>
                     <span className="text-sm text-text-muted">
                       {profile.introduction.pronouns}
@@ -474,23 +605,10 @@ export default function ProfilePage() {
                   </button>
                 )}
               </div>
-              {isOwner && (
-                <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  <ProfileImageUploader
-                    label="Profile image"
-                    value={profilePictureUrl}
-                    circular
-                    onChange={(url) => updateImageDraft("profile", url)}
-                  />
-                  <ProfileImageUploader
-                    label="Cover image"
-                    value={coverImageUrl}
-                    onChange={(url) => updateImageDraft("cover", url)}
-                  />
-                </div>
-              )}
             </div>
           </section>
+
+          {/* About Section */}
           <ProfileSection
             title="About"
             onEdit={isOwner ? openAboutEditor : undefined}
@@ -509,6 +627,8 @@ export default function ProfilePage() {
               ))}
             </div>
           </ProfileSection>
+
+          {/* Skills Section */}
           <ProfileSection
             title="Skills"
             onEdit={isOwner ? openSkillsEditor : undefined}
@@ -524,6 +644,8 @@ export default function ProfilePage() {
               ))}
             </div>
           </ProfileSection>
+
+          {/* Experience Section */}
           <ProfileSection
             title="Experience"
             eyebrow={`${profile.experience.length} roles`}
@@ -563,33 +685,33 @@ export default function ProfilePage() {
                         </span>
                       ))}
                     </div>
-                    {isOwner && (
-                      <div className="mt-3 flex gap-3">
-                        <button
-                          type="button"
-                          onClick={() => openExperienceEditor(item)}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-accent-cyan"
-                        >
-                          <Pencil size={13} />
-                          Update
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            void dispatch(deleteExperience(item._id))
-                          }
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-error"
-                        >
-                          <Trash2 size={13} />
-                          Delete
-                        </button>
-                      </div>
-                    )}
                   </div>
+                  {isOwner && (
+                    <div className="mt-3 flex gap-3 items-start">
+                      <button
+                        type="button"
+                        onClick={() => openExperienceEditor(item)}
+                        className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-accent-cyan"
+                      >
+                        <Pencil size={18} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void dispatch(deleteExperience(item._id))
+                        }
+                        className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-error"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </article>
             ))}
           </ProfileSection>
+
+          {/* Education Section */}
           <ProfileSection
             title="Education"
             eyebrow={`${profile.education.length} schools`}
@@ -622,30 +744,30 @@ export default function ProfilePage() {
                       {item.description}
                     </p>
                   )}
+                </div>
                   {isOwner && (
-                    <div className="mt-3 flex gap-3">
+                    <div className="mt-3 flex gap-3 items-start">
                       <button
                         type="button"
                         onClick={() => openEducationEditor(item)}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-accent-cyan"
+                        className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-accent-cyan"
                       >
-                        <Pencil size={13} />
-                        Update
+                        <Pencil size={18} />
                       </button>
                       <button
                         type="button"
                         onClick={() => void dispatch(deleteEducation(item._id))}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-error"
+                        className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-error"
                       >
-                        <Trash2 size={13} />
-                        Delete
+                        <Trash2 size={18} />
                       </button>
                     </div>
                   )}
-                </div>
               </article>
             ))}
           </ProfileSection>
+
+          {/* Certifications Section */}
           <ProfileSection
             title="Licenses & certifications"
             onAdd={isOwner ? () => openCertificationEditor() : undefined}
@@ -683,33 +805,32 @@ export default function ProfilePage() {
                       Show credential <ExternalLink size={13} />
                     </a>
                   )}
+                </div>
                   {isOwner && (
-                    <div className="mt-3 flex gap-3">
+                    <div className="mt-3 flex gap-3 items-start">
                       <button
                         type="button"
                         onClick={() => openCertificationEditor(item)}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-accent-cyan"
+                        className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-accent-cyan"
                       >
-                        <Pencil size={13} />
-                        Update
+                        <Pencil size={18} />
                       </button>
                       <button
                         type="button"
                         onClick={() =>
                           void dispatch(deleteCertification(item._id))
                         }
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-error"
+                        className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-error"
                       >
-                        <Trash2 size={13} />
-                        Delete
+                        <Trash2 size={18} />
                       </button>
                     </div>
                   )}
-                </div>
               </article>
             ))}
           </ProfileSection>
         </main>
+
         <aside className="space-y-5">
           <ProfileSection title="Profile strength">
             <div className="flex items-center justify-between text-sm">
@@ -760,6 +881,7 @@ export default function ProfilePage() {
           </ProfileSection>
         </aside>
       </div>
+
       {dialog && (
         <ProfileDialog
           key={dialog.title}
@@ -770,7 +892,27 @@ export default function ProfilePage() {
           open
           onClose={() => setDialog(null)}
           onSave={dialog.save}
-        />
+        >
+          {dialog.title === "Edit introduction" && profile && (
+            <div className="mb-5 grid gap-3 sm:grid-cols-2 col-span-full">
+              <ProfileImageUploader
+                label="Profile image"
+                value={profile.introduction.profilePicture.url}
+                circular
+                onChange={(url, publicId) =>
+                  updateImageDraft("profile", url, publicId)
+                }
+              />
+              <ProfileImageUploader
+                label="Cover image"
+                value={profile.introduction.coverImage.url}
+                onChange={(url, publicId) =>
+                  updateImageDraft("cover", url, publicId)
+                }
+              />
+            </div>
+          )}
+        </ProfileDialog>
       )}
     </div>
   );

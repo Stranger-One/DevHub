@@ -13,6 +13,12 @@ import type {
 const basePath = "/developer/profile";
 
 export const profileService = {
+  async geProfile(userId: string) {
+    const response = await axiosInstance.get<ApiResponse<ProfileResponse>>(
+      `/profile/${userId}`,
+    );
+    return response.data;
+  },
   async getMyProfile() {
     const response = await axiosInstance.get<ApiResponse<ProfileResponse>>(
       `${basePath}/me`,

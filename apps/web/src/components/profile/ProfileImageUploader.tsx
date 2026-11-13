@@ -1,11 +1,13 @@
 import { ImagePlus, Trash2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
+import { toast } from "sonner";
+import { uploadMedia } from "../../services/cloudinary/upload.service";
 
 type ProfileImageUploaderProps = {
   label: string;
   value?: string;
   circular?: boolean;
-  onChange: (url: string) => void;
+  onChange: (url: string, publicId: string) => void;
 };
 
 export function ProfileImageUploader({
@@ -16,16 +18,43 @@ export function ProfileImageUploader({
 }: ProfileImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState(value);
+    const [progress, setProgress] = useState(0);
+    const [loading, setLoading] = useState(false);
   const selectImage = () => inputRef.current?.click();
-  const handleFile = (file?: File) => {
+
+  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setPreview(url);
-    onChange(url);
+
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      toast.info("Only JPG, PNG and WEBP are allowed");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.info("Maximum file size is 5 MB");
+      return;
+    }
+
+    setPreview(URL.createObjectURL(file));
+    setLoading(true);
+
+    try {
+      const result = await uploadMedia(file, "image", setProgress);
+      onChange(result.secure_url, result.public_id);
+      toast.success("Profile photo uploaded!");
+    } catch (error) {
+      console.error("Upload failed:", error);
+      toast.error("Unable to upload profile photo");
+    } finally {
+      setLoading(false);
+    }
   };
+
   const removeImage = () => {
     setPreview(undefined);
-    onChange("");
+    onChange("", "");
   };
 
   return (
@@ -39,7 +68,7 @@ export function ProfileImageUploader({
             type="file"
             accept="image/*"
             className="hidden"
-            onChange={(event) => handleFile(event.target.files?.[0])}
+            onChange={handleUpload}
           />
           {preview ? (
             <img src={preview} alt="" className="h-full w-full object-cover" />
@@ -47,10 +76,15 @@ export function ProfileImageUploader({
             <ImagePlus size={19} className="text-accent-purple" />
           )}
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-text-primary">{label}</p>
-          <p className="mt-1 text-xs text-text-muted">JPG, PNG, or WebP</p>
-        </div>
+        {loading ? (
+          <p>Uploading: {progress}%</p>
+        ) : (
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-text-primary">{label}</p>
+            <p className="mt-1 text-xs text-text-muted">JPG, PNG, or WebP</p>
+          </div>
+        )}
+
         <div className="flex gap-1">
           <button
             type="button"

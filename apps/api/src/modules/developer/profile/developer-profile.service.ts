@@ -87,6 +87,8 @@ const updateProfile = async (
   userId: string,
   update: Record<string, unknown>,
 ) => {
+  console.log("Update Payload: ", update);
+
   await ensureProfile(userId);
   const profile = await DeveloperProfileModel.findOneAndUpdate(
     { userId },

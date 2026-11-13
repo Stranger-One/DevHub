@@ -27,6 +27,20 @@ const withError = async <T>(
   }
 };
 
+export const fetchProfile = createAsyncThunk<
+  { userId: string; profile: DeveloperProfile },
+  string,
+  ThunkConfig
+>("profile/fetchProfile", async (userId, { rejectWithValue }) =>
+  withError(
+    async () => ({
+      userId,
+      profile: (await profileService.geProfile(userId)).data.profile,
+    }),
+    rejectWithValue,
+  ),
+);
+
 export const fetchMyProfile = createAsyncThunk<
   Awaited<ReturnType<typeof profileService.getMyProfile>>,
   void,

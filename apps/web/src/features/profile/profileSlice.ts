@@ -5,7 +5,9 @@ import {
 } from "@reduxjs/toolkit";
 import { toast } from "sonner";
 import type { ApiErrorPayload, ApiResponse } from "../../types/api.types";
-import { fetchMyProfile, fetchPublicProfile } from "./profileThunk";
+import {
+  fetchProfile,
+} from "./profileThunk";
 import type {
   DeveloperProfile,
   ProfileResponse,
@@ -13,8 +15,7 @@ import type {
 } from "./profile.types";
 
 const initialState: ProfileState = {
-  current: null,
-  publicProfiles: {},
+  profile: null,
   fetchStatus: "idle",
   mutationStatus: "idle",
   error: null,
@@ -42,8 +43,7 @@ const getError = (action: {
 }) =>
   action.payload?.message ?? action.error.message ?? "Profile request failed.";
 const setProfile = (state: ProfileState, profile: DeveloperProfile) => {
-  state.current = profile;
-  state.publicProfiles[profile.userId] = profile;
+  state.profile = profile;
 };
 const isMutationAction = (action: UnknownAction) =>
   mutationPrefixes.some((prefix) => action.type.startsWith(`${prefix}/`));
@@ -63,35 +63,22 @@ const profileSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder.addCase(fetchMyProfile.pending, (state) => {
-      state.fetchStatus = "loading";
-      state.error = null;
-    });
-    builder.addCase(fetchMyProfile.fulfilled, (state, action) => {
-      state.fetchStatus = "succeeded";
-      state.error = null;
-      const profile = action.payload.data.profile;
-      if (profile) setProfile(state, profile);
-    });
-    builder.addCase(fetchMyProfile.rejected, (state, action) => {
-      state.fetchStatus = "failed";
-      state.error = getError(action);
-      toast.error(state.error);
-    });
-    builder.addCase(fetchPublicProfile.pending, (state) => {
-      state.fetchStatus = "loading";
-      state.error = null;
-    });
-    builder.addCase(fetchPublicProfile.fulfilled, (state, action) => {
-      state.fetchStatus = "succeeded";
-      state.error = null;
-      state.publicProfiles[action.payload.userId] = action.payload.profile;
-    });
-    builder.addCase(fetchPublicProfile.rejected, (state, action) => {
-      state.fetchStatus = "failed";
-      state.error = getError(action);
-      toast.error(state.error);
-    });
+    builder
+      .addCase(fetchProfile.pending, (state) => {
+        state.fetchStatus = "loading";
+        state.error = null;
+      })
+      .addCase(fetchProfile.fulfilled, (state, action) => {
+        state.fetchStatus = "succeeded";
+        state.error = null;
+        const profile = action.payload.profile;
+        if (profile) setProfile(state, profile);
+      })
+      .addCase(fetchProfile.rejected, (state, action) => {
+        state.fetchStatus = "failed";
+        state.error = getError(action);
+        toast.error(state.error);
+      });
     builder.addMatcher(
       (action): action is UnknownAction & { type: string } =>
         isMutationAction(action) && action.type.endsWith("/pending"),

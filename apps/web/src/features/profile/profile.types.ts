@@ -30,8 +30,7 @@ export type SocialLinkInput = {
 };
 
 export type ProfileState = {
-  current: DeveloperProfile | null;
-  publicProfiles: Record<string, DeveloperProfile>;
+  profile: DeveloperProfile | null;
   fetchStatus: "idle" | "loading" | "succeeded" | "failed";
   mutationStatus: "idle" | "loading" | "succeeded" | "failed";
   error: string | null;

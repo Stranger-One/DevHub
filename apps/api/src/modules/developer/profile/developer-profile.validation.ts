@@ -16,10 +16,10 @@ export const introductionSchema = z.object({
   lastName: z.string().trim().min(1).max(80),
   pronouns: z.enum(["he/him", "she/her", "they/them", "other"]).optional(),
   profilePicture: z
-    .object({ url: z.string().url(), publicId: z.string() })
+    .object({ url: z.string().optional(), publicId: z.string().optional() })
     .optional(),
   coverImage: z
-    .object({ url: z.string().url(), publicId: z.string() })
+    .object({ url: z.string().optional(), publicId: z.string().optional() })
     .optional(),
   headline: optionalText(220),
   location: z

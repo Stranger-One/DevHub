@@ -23,6 +23,7 @@ const getDuplicateKeyFields = (error: unknown) => {
 };
 
 const normalizeError = (error: unknown): ApiError => {
+  console.log(error)
   if (error instanceof ApiError) return error; // Already an ApiError, no need to normalize
 
   if (error instanceof ZodError) {

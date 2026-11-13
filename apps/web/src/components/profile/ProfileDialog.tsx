@@ -1,15 +1,17 @@
 import { X } from "lucide-react";
 import { useForm, type SubmitHandler } from "react-hook-form";
+import type { ReactNode } from "react";
 
 export type ProfileField = {
   name: string;
   label: string;
   value?: string | boolean;
-  type?: "text" | "date" | "url" | "select" | "checkbox";
+  type?: "text" | "date" | "url" | "select" | "checkbox" | "space";
   options?: { label: string; value: string }[];
   multiline?: boolean;
   placeholder?: string;
   required?: boolean;
+  span?: number;
 };
 
 type ProfileDialogProps = {
@@ -18,8 +20,22 @@ type ProfileDialogProps = {
   fields: ProfileField[];
   open: boolean;
   submitLabel?: string;
+  children?: ReactNode;
   onClose: () => void;
   onSave: (values: Record<string, string | boolean>) => void;
+};
+
+const getColumnSpan = (span?: number) => {
+  switch (span) {
+    case 1:
+      return "col-span-1";
+    case 2:
+      return "col-span-2";
+    case 3:
+      return "col-span-3";
+    default:
+      return "col-span-1";
+  }
 };
 
 export function ProfileDialog({
@@ -28,6 +44,7 @@ export function ProfileDialog({
   fields,
   open,
   submitLabel = "Save changes",
+  children,
   onClose,
   onSave,
 }: ProfileDialogProps) {
@@ -43,9 +60,11 @@ export function ProfileDialog({
       ]),
     ),
   });
+
   const onSubmit: SubmitHandler<Record<string, string | boolean>> = (
     values,
   ) => {
+    console.log("Values: ", values);
     onSave(values);
     onClose();
   };
@@ -59,7 +78,7 @@ export function ProfileDialog({
       onMouseDown={onClose}
     >
       <div
-        className="max-h-[min(800px,92vh)] w-full max-w-xl overflow-y-auto rounded-2xl border border-border-strong bg-surface-raised shadow-2xl"
+        className="max-h-[min(800px,92vh)] w-full max-w-[min(900px,90vw)] overflow-y-auto rounded-2xl border border-border-strong bg-surface-raised shadow-2xl"
         role="dialog"
         aria-modal="true"
         aria-labelledby="profile-dialog-title"
@@ -85,15 +104,16 @@ export function ProfileDialog({
         </div>
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="space-y-4 p-5 sm:p-6"
+          className="space-y-2 p-5 sm:p-6 grid grid-cols-3 gap-x-4 "
         >
+          {children}
           {fields.map((field) => {
             const fieldError = errors[field.name];
             if (field.type === "checkbox") {
               return (
                 <label
                   key={field.name}
-                  className="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-surface px-3 py-3 text-sm text-text-secondary"
+                  className={`flex cursor-pointer items-center gap-3 rounded-xl py-3  px-3 text-sm text-text-secondary ${getColumnSpan(field.span)}`}
                 >
                   <input
                     type="checkbox"
@@ -104,10 +124,18 @@ export function ProfileDialog({
                 </label>
               );
             }
+            if (field.type === "space") {
+              return (
+                <div
+                  key={field.name}
+                  className={` ${getColumnSpan(field.span)}`}
+                />
+              );
+            }
             return (
               <label
                 key={field.name}
-                className="block text-sm font-medium text-text-secondary"
+                className={`block text-sm font-medium text-text-secondary ${getColumnSpan(field.span)}`}
               >
                 {field.label}
                 {field.type === "select" ? (
@@ -157,7 +185,7 @@ export function ProfileDialog({
               </label>
             );
           })}
-          <div className="flex justify-end gap-3 border-t border-border pt-5">
+          <div className="flex justify-end gap-3 border-t border-border pt-5 col-span-full">
             <button
               type="button"
               onClick={onClose}
