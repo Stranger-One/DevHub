@@ -20,6 +20,7 @@ type ProfileDialogProps = {
   fields: ProfileField[];
   open: boolean;
   submitLabel?: string;
+  disableSubmit?: boolean;
   children?: ReactNode;
   onClose: () => void;
   onSave: (values: Record<string, string | boolean>) => void;
@@ -38,10 +39,14 @@ const getColumnSpan = (span?: number) => {
   }
 };
 
+const getDateInputValue = (value?: string | boolean) =>
+  typeof value === "string" ? value.slice(0, 10) : "";
+
 export function ProfileDialog({
   title,
   description,
   fields,
+  disableSubmit,
   open,
   submitLabel = "Save changes",
   children,
@@ -56,7 +61,9 @@ export function ProfileDialog({
     defaultValues: Object.fromEntries(
       fields.map((field) => [
         field.name,
-        field.value ?? (field.type === "checkbox" ? false : ""),
+        field.type === "date"
+          ? getDateInputValue(field.value)
+          : (field.value ?? (field.type === "checkbox" ? false : "")),
       ]),
     ),
   });
@@ -96,7 +103,7 @@ export function ProfileDialog({
             type="button"
             onClick={onClose}
             aria-label="Close dialog"
-            className="grid size-9 shrink-0 place-items-center rounded-lg text-text-muted hover:bg-surface-hover hover:text-text-primary"
+            className="grid size-9 shrink-0 place-items-center rounded-lg text-text-muted hover:bg-surface-hover hover:text-text-primary cursor-pointer"
           >
             <X size={18} />
           </button>
@@ -144,11 +151,15 @@ export function ProfileDialog({
                         ? `${field.label} is required`
                         : false,
                     })}
-                    className="mt-2 w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text-primary outline-none focus:border-primary"
+                    className="mt-2 w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text-primary outline-none focus:border-primary cursor-pointer"
                   >
                     <option value="">Select {field.label.toLowerCase()}</option>
                     {field.options?.map((option) => (
-                      <option key={option.value} value={option.value}>
+                      <option
+                        className="capitalize"
+                        key={option.value}
+                        value={option.value}
+                      >
                         {option.label}
                       </option>
                     ))}
@@ -188,13 +199,14 @@ export function ProfileDialog({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-text-secondary hover:bg-surface-hover hover:text-text-primary"
+              className="rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-text-secondary hover:bg-surface-hover hover:text-text-primary cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover"
+              disabled={disableSubmit}
+              className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {submitLabel}
             </button>

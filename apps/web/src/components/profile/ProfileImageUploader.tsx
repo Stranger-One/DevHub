@@ -8,6 +8,7 @@ type ProfileImageUploaderProps = {
   value?: string;
   circular?: boolean;
   onChange: (url: string, publicId: string) => void;
+  setDisableSubmit?: (value: boolean) => void;
 };
 
 export function ProfileImageUploader({
@@ -15,6 +16,7 @@ export function ProfileImageUploader({
   value,
   circular = false,
   onChange,
+  setDisableSubmit,
 }: ProfileImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string>();
@@ -44,6 +46,7 @@ export function ProfileImageUploader({
     setRemoved(false);
     setProgress(0);
     setLoading(true);
+    setDisableSubmit?.(true);
 
     try {
       const result = await uploadMedia(file, "image", setProgress);
@@ -56,6 +59,7 @@ export function ProfileImageUploader({
       toast.error(`Unable to upload ${label.toLowerCase()}`);
     } finally {
       setLoading(false);
+      setDisableSubmit?.(false);
       URL.revokeObjectURL(localPreview);
       event.target.value = "";
     }
@@ -116,7 +120,7 @@ export function ProfileImageUploader({
             onClick={selectImage}
             aria-label={preview ? `Change ${label}` : `Add ${label}`}
             disabled={loading}
-            className="grid size-9 place-items-center rounded-lg text-text-muted hover:bg-surface-hover hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-50"
+            className="grid size-9 place-items-center rounded-lg text-text-muted hover:bg-surface-hover hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
           >
             <Upload size={16} />
           </button>
@@ -125,7 +129,7 @@ export function ProfileImageUploader({
               type="button"
               onClick={removeImage}
               aria-label={`Remove ${label}`}
-              className="grid size-9 place-items-center rounded-lg text-text-muted hover:bg-error/10 hover:text-error"
+              className="grid size-9 place-items-center rounded-lg text-text-muted hover:bg-error/10 hover:text-error cursor-pointer"
             >
               <Trash2 size={16} />
             </button>

@@ -30,9 +30,7 @@ import {
   deleteCertification,
   deleteEducation,
   deleteExperience,
-  fetchMyProfile,
   fetchProfile,
-  fetchPublicProfile,
   updateAbout,
   updateCertification,
   updateEducation,
@@ -102,32 +100,58 @@ export default function ProfilePage() {
       </div>
     );
 
+  const fullName =
+    `${profile.introduction.firstName} ${profile.introduction.lastName}`.trim();
+  const initials = fullName
+    .split(" ")
+    .filter(Boolean)
+    .map((name) => name[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
     <div className="mx-auto max-w-295 pb-10">
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
         <main className="min-w-0 space-y-5">
-
           {/* Introduction Section */}
           <section className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_12px_36px_rgba(0,0,0,0.12)]">
-            <div className="h-36 bg-[linear-gradient(115deg,#23133e_0%,#341a5a_44%,#123c4e_100%)] sm:h-48">
-              <img
-                src={
-                  profile.introduction.coverImage.url ||
-                  "/cover-placeholder-image.jpg"
-                }
-                alt="cover image"
-                className="h-full w-full object-cover opacity-60 mix-blend-screen"
-              />
+            <div className="relative h-36 overflow-hidden  sm:h-48">
+              {profile.introduction.coverImage.url ? (
+                <img
+                  src={profile.introduction.coverImage.url}
+                  alt="cover image"
+                  className="h-full w-full object-cover opacity-60 mix-blend-screen"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-between px-8 sm:px-14 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,0.06)_0,rgba(255,255,255,0.06)_1px,transparent_1px,transparent_18px),linear-gradient(115deg,#23133e_0%,#341a5a_44%,#123c4e_100%)]">
+                  <div className="h-24 w-24 rounded-full border border-white/10 bg-white/5 blur-2xl" />
+                  <div className="relative text-right">
+                    <span className="block text-[0.65rem] font-bold uppercase tracking-[0.28em] text-cyan-100/60">
+                      DevHub profile
+                    </span>
+                    <span className="mt-1 block text-2xl font-bold tracking-[0.12em] text-white/80 sm:text-4xl">
+                      {initials || "DH"}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="relative px-5 pb-5 pt-16 sm:pt-24 sm:px-7 sm:pb-7">
-              <img
-                src={
-                  profile.introduction.profilePicture.url ||
-                  "/profile-placeholder-image-png.png"
-                }
-                alt={profile.introduction.firstName}
-                className="absolute top-0 left-[5%] size-28 rounded-full border-4 border-surface object-cover shadow-xl sm:size-44 -translate-y-1/2"
-              />
+              {profile.introduction.profilePicture.url ? (
+                <img
+                  src={profile.introduction.profilePicture.url}
+                  alt={fullName || "Profile"}
+                  className="absolute top-0 left-[5%] size-28 -translate-y-1/2 rounded-full border-4 border-surface object-cover shadow-xl sm:size-44"
+                />
+              ) : (
+                <div
+                  aria-label={`${fullName || "Profile"} avatar`}
+                  className="absolute left-[5%] top-0 grid size-28 -translate-y-1/2 place-items-center rounded-full border-4 border-surface bg-[linear-gradient(135deg,#914bff_0%,#e879f9_48%,#22c7f2_100%)] text-3xl font-bold tracking-[0.08em] text-white shadow-xl sm:size-44 sm:text-5xl "
+                >
+                  {initials || "DH"}
+                </div>
+              )}
 
               <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                 <div>
@@ -153,7 +177,7 @@ export default function ProfilePage() {
                   <button
                     type="button"
                     onClick={() => openEditor("introduction")}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover cursor-pointer"
                   >
                     <Sparkles size={16} />
                     Edit profile
@@ -394,7 +418,7 @@ export default function ProfilePage() {
         </main>
 
         <aside className="space-y-5">
-          <ProfileSection title="Profile strength">
+          {isOwner && <ProfileSection title="Profile strength">
             <div className="flex items-center justify-between text-sm">
               <span className="text-text-secondary">Complete profile</span>
               <strong className="text-accent-emerald">
@@ -407,7 +431,7 @@ export default function ProfilePage() {
                 style={{ width: `${profile.completionPercentage}%` }}
               />
             </div>
-          </ProfileSection>
+          </ProfileSection>}
           <ProfileSection title="Contact & links">
             <div className="space-y-3">
               {profile.socialLinks.map((link) => (

@@ -35,7 +35,7 @@ export function ProfileSection({
               type="button"
               onClick={onAdd}
               aria-label={`Add ${title}`}
-              className="grid size-9 place-items-center rounded-lg text-text-muted hover:bg-surface-hover hover:text-text-primary focus-visible:outline-2 focus-visible:outline-accent-purple"
+              className="grid size-9 place-items-center rounded-lg text-text-muted hover:bg-surface-hover hover:text-text-primary focus-visible:outline-2 focus-visible:outline-accent-purple cursor-pointer"
             >
               <Plus size={17} />
             </button>
@@ -45,7 +45,7 @@ export function ProfileSection({
               type="button"
               onClick={onEdit}
               aria-label={`Edit ${title}`}
-              className="grid size-9 place-items-center rounded-lg text-text-muted hover:bg-surface-hover hover:text-text-primary focus-visible:outline-2 focus-visible:outline-accent-purple"
+              className="grid size-9 place-items-center rounded-lg text-text-muted hover:bg-surface-hover hover:text-text-primary focus-visible:outline-2 focus-visible:outline-accent-purple cursor-pointer"
             >
               <Pencil size={16} />
             </button>

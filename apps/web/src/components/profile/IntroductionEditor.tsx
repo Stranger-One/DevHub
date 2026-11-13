@@ -28,6 +28,7 @@ export function IntroductionEditor({
     profile: profile.profilePicture,
     cover: profile.coverImage,
   });
+  const [disableSubmit, setDisableSubmit] = useState(false)
 
   const fields: ProfileField[] = [
     {
@@ -85,6 +86,7 @@ export function IntroductionEditor({
     <ProfileDialog
       title="Edit introduction"
       description="Update your headline, location, and profile imagery."
+      disableSubmit={disableSubmit}
       fields={fields}
       open={open}
       onClose={onClose}
@@ -113,6 +115,7 @@ export function IntroductionEditor({
           onChange={(url, publicId) =>
             setImages((current) => ({ ...current, profile: { url, publicId } }))
           }
+          setDisableSubmit={setDisableSubmit}
         />
         <ProfileImageUploader
           label="Cover image"
@@ -120,6 +123,7 @@ export function IntroductionEditor({
           onChange={(url, publicId) =>
             setImages((current) => ({ ...current, cover: { url, publicId } }))
           }
+          setDisableSubmit={setDisableSubmit}
         />
       </div>
     </ProfileDialog>
