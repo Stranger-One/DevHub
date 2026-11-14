@@ -41,37 +41,37 @@ export const fetchProfile = createAsyncThunk<
   ),
 );
 
-export const fetchMyProfile = createAsyncThunk<
-  Awaited<ReturnType<typeof profileService.getMyProfile>>,
-  void,
-  ThunkConfig
->("profile/fetchMyProfile", async (_, { rejectWithValue }) =>
-  withError(() => profileService.getMyProfile(), rejectWithValue),
-);
+// export const fetchMyProfile = createAsyncThunk<
+//   Awaited<ReturnType<typeof profileService.getMyProfile>>,
+//   void,
+//   ThunkConfig
+// >("profile/fetchMyProfile", async (_, { rejectWithValue }) =>
+//   withError(() => profileService.getMyProfile(), rejectWithValue),
+// );
 
-export const fetchPublicProfile = createAsyncThunk<
-  { userId: string; profile: DeveloperProfile },
-  string,
-  ThunkConfig
->("profile/fetchPublicProfile", async (userId, { rejectWithValue }) =>
-  withError(
-    async () => ({
-      userId,
-      profile: (await profileService.getPublicProfile(userId)).data.profile,
-    }),
-    rejectWithValue,
-  ),
-);
+// export const fetchPublicProfile = createAsyncThunk<
+//   { userId: string; profile: DeveloperProfile },
+//   string,
+//   ThunkConfig
+// >("profile/fetchPublicProfile", async (userId, { rejectWithValue }) =>
+//   withError(
+//     async () => ({
+//       userId,
+//       profile: (await profileService.getPublicProfile(userId)).data.profile,
+//     }),
+//     rejectWithValue,
+//   ),
+// );
 
-export const createProfile = createAsyncThunk<
-  ReturnType<typeof profileService.createProfile> extends Promise<infer T>
-    ? T
-    : never,
-  Record<string, unknown>,
-  ThunkConfig
->("profile/create", async (input, { rejectWithValue }) =>
-  withError(() => profileService.createProfile(input), rejectWithValue),
-);
+// export const createProfile = createAsyncThunk<
+//   ReturnType<typeof profileService.createProfile> extends Promise<infer T>
+//     ? T
+//     : never,
+//   Record<string, unknown>,
+//   ThunkConfig
+// >("profile/create", async (input, { rejectWithValue }) =>
+//   withError(() => profileService.createProfile(input), rejectWithValue),
+// );
 
 export const updateIntroduction = createAsyncThunk<
   ReturnType<typeof profileService.updateIntroduction> extends Promise<infer T>
@@ -100,14 +100,33 @@ export const updateSkills = createAsyncThunk<
 >("profile/updateSkills", async (input, { rejectWithValue }) =>
   withError(() => profileService.updateSkills(input), rejectWithValue),
 );
-export const updateSocialLinks = createAsyncThunk<
-  ReturnType<typeof profileService.updateSocialLinks> extends Promise<infer T>
+
+export const addSocialLink = createAsyncThunk<
+  ReturnType<typeof profileService.addSocialLink> extends Promise<infer T>
     ? T
     : never,
-  SocialLinkInput[],
+  SocialLinkInput,
   ThunkConfig
->("profile/updateSocialLinks", async (input, { rejectWithValue }) =>
-  withError(() => profileService.updateSocialLinks(input), rejectWithValue),
+>("profile/addSocialLink", async (input, { rejectWithValue }) =>
+  withError(() => profileService.addSocialLink(input), rejectWithValue),
+);
+export const updateSocialLink = createAsyncThunk<
+  ReturnType<typeof profileService.updateSocialLink> extends Promise<infer T>
+    ? T
+    : never,
+  { id: string; input: Partial<SocialLinkInput> },
+  ThunkConfig
+>("profile/updateSocialLink", async ({ id, input }, { rejectWithValue }) =>
+  withError(() => profileService.updateSocialLink(id, input), rejectWithValue),
+);
+export const deleteSocialLink = createAsyncThunk<
+  ReturnType<typeof profileService.deleteSocialLink> extends Promise<infer T>
+    ? T
+    : never,
+  string,
+  ThunkConfig
+>("profile/deleteSocialLink", async (id, { rejectWithValue }) =>
+  withError(() => profileService.deleteSocialLink(id), rejectWithValue),
 );
 
 export const addEducation = createAsyncThunk<

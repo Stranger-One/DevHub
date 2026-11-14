@@ -5,9 +5,7 @@ import {
 } from "@reduxjs/toolkit";
 import { toast } from "sonner";
 import type { ApiErrorPayload, ApiResponse } from "../../types/api.types";
-import {
-  fetchProfile,
-} from "./profileThunk";
+import { fetchProfile } from "./profileThunk";
 import type {
   DeveloperProfile,
   ProfileResponse,
@@ -25,7 +23,9 @@ const mutationPrefixes = [
   "profile/updateIntroduction",
   "profile/updateAbout",
   "profile/updateSkills",
-  "profile/updateSocialLinks",
+  "profile/addSocialLink",
+  "profile/updateSocialLink",
+  "profile/deleteSocialLink",
   "profile/addEducation",
   "profile/updateEducation",
   "profile/deleteEducation",
@@ -42,7 +42,7 @@ const getError = (action: {
   error: { message?: string };
 }) =>
   action.payload?.message ?? action.error.message ?? "Profile request failed.";
-const setProfile = (state: ProfileState, profile: DeveloperProfile) => {
+const setProfile = (state: ProfileState, profile: DeveloperProfile | null) => {
   state.profile = profile;
 };
 const isMutationAction = (action: UnknownAction) =>
@@ -77,6 +77,7 @@ const profileSlice = createSlice({
       .addCase(fetchProfile.rejected, (state, action) => {
         state.fetchStatus = "failed";
         state.error = getError(action);
+        setProfile(state, null);
         toast.error(state.error);
       });
     builder.addMatcher(

@@ -59,10 +59,24 @@ export const profileService = {
     );
     return response.data;
   },
-  async updateSocialLinks(socialLinks: SocialLinkInput[]) {
-    const response = await axiosInstance.patch<ApiResponse<ProfileResponse>>(
+  
+  async addSocialLink(input: SocialLinkInput) {
+    const response = await axiosInstance.post<ApiResponse<ProfileResponse>>(
       `${basePath}/social-links`,
-      { socialLinks },
+      input,
+    );
+    return response.data;
+  },
+  async updateSocialLink(id: string, input: Partial<SocialLinkInput>) {
+    const response = await axiosInstance.patch<ApiResponse<ProfileResponse>>(
+      `${basePath}/social-links/${id}`,
+      input,
+    );
+    return response.data;
+  },
+  async deleteSocialLink(id: string) {
+    const response = await axiosInstance.delete<ApiResponse<ProfileResponse>>(
+      `${basePath}/social-links/${id}`,
     );
     return response.data;
   },

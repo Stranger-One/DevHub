@@ -11,6 +11,7 @@ import {
   MessageCircle,
   Settings,
   Sparkles,
+  User,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -109,7 +110,7 @@ export function DashboardLayout() {
       <button
         type="button"
         onClick={mobile ? handleMobileLogout : handleLogout}
-        className="relative my-3 flex items-center w-full cursor-pointer hover:bg-primary-soft hover:shadow-[0_8px_24px_rgba(145,75,255,0.12)] "
+        className="relative my-3 flex items-center w-full cursor-pointer hover:translate-x-1 hover:bg-surface-hover hover:text-text-primary "
       >
         <span className="p-3 shrink-0">
           <LogOut size={20} strokeWidth={1.8} className="" />
@@ -123,20 +124,20 @@ export function DashboardLayout() {
 
       <Link
         to={`/profile/${user?.id}`}
-        className={`flex items-center gap-3 rounded-xl px-3 py-3 ${!mobile && !isExpanded ? "justify-center px-1" : ""}`}
+        className={`relative my-3 flex items-center w-full cursor-pointer hover:translate-x-1 hover:bg-surface-hover hover:text-text-primary `}
       >
-        <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary-soft text-sm font-bold text-accent-purple ring-1 ring-border-strong transition-transform duration-300 hover:scale-105">
-          {user?.username?.slice(0, 1).toUpperCase() ?? "U"}
-        </div>
+        <span className="p-3 shrink-0">
+          <User size={20} strokeWidth={1.8} />
+        </span>
         <div
-          className={`min-w-0 overflow-hidden whitespace-nowrap transition-all duration-300 ${mobile || isExpanded ? "max-w-40 translate-x-0 opacity-100" : "max-w-0 -translate-x-2 opacity-0"}`}
+          className={`transition-all duration-300 whitespace-nowrap ${mobile || isExpanded ? "translate-x-0 opacity-100" : "-translate-x-2 opacity-0"}`}
         >
-          <strong className="block truncate text-sm">
+          <p className="block truncate text-sm font-bold">
             {user?.username ?? "Your account"}
-          </strong>
-          <span className="text-xs capitalize text-text-muted">
+          </p>
+          <p className="text-xs capitalize text-text-muted">
             {user?.role ?? "Member"}
-          </span>
+          </p>
         </div>
       </Link>
     </div>
@@ -168,7 +169,7 @@ export function DashboardLayout() {
       />
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-[min(19rem,88vw)] flex-col overflow-y-auto border-r border-border bg-surface px-4 py-5 shadow-2xl transition-[transform,width,padding] duration-300 md:w-20 md:translate-x-0 md:overflow-hidden md:px-3 md:shadow-none ${isMobileOpen ? "translate-x-0" : "-translate-x-full"} ${isExpanded ? "md:w-64 md:px-5" : ""}`}
+        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-[min(19rem,88vw)] flex-col overflow-y-auto border-r border-border bg-surface px-4 py-10 shadow-2xl transition-all duration-300 ease-in-out md:w-20 md:translate-x-0 md:overflow-hidden md:px-3 md:shadow-none ${isMobileOpen ? "translate-x-0" : "-translate-x-full"} ${isExpanded ? "md:w-64 md:px-5" : ""}`}
         onMouseEnter={() => dispatch(setSidebarPinned(true))}
         // onMouseLeave={() => dispatch(setSidebarPinned(false))}
       >
@@ -203,7 +204,7 @@ export function DashboardLayout() {
 
         <button
           aria-label="Close workspace navigation"
-          className={`absolute right-5 top-5 size-9 transition-all duration-500 ease-in-out cursor-pointer place-items-center rounded-xl text-text-muted hover:bg-surface-hover hover:text-text-primary hidden md:grid ${isExpanded ? "opacity-100 block" : "opacity-0 hidden"}`}
+          className={`absolute right-5 top-10 size-9 transition-all duration-500 ease-in-out cursor-pointer place-items-center rounded-xl text-text-muted hover:bg-surface-hover hover:text-text-primary hidden md:grid ${isExpanded ? "opacity-100 block" : "opacity-0 hidden"}`}
           onClick={() => dispatch(setSidebarPinned(false))}
           type="button"
         >

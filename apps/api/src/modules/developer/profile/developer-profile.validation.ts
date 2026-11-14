@@ -133,6 +133,7 @@ export const updateSkillsSchema = z.object({
 export const updateSocialLinksSchema = z.object({
   socialLinks: z.array(socialLinkSchema).max(50),
 });
+export const updateSocialLinkSchema = socialLinkSchema.partial();
 export const updateEducationSchema = educationFields.partial();
 export const updateExperienceSchema = experienceFields.partial();
 export const updateCertificationSchema = certificationFields.partial();

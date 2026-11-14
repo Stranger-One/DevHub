@@ -1,7 +1,7 @@
 import { ProfileDialog, type ProfileField } from "./ProfileDialog";
 
 type SkillsEditorProps = {
-  value: string[];
+  value: string[] | undefined;
   open: boolean;
   onClose: () => void;
   onSave: (skills: string[]) => void;
@@ -17,7 +17,7 @@ export function SkillsEditor({
     {
       name: "skills",
       label: "Skills (comma separated)",
-      value: value.join(", "),
+      value: value?.join(", "),
       span: 3,
     },
   ];

@@ -27,48 +27,48 @@ const sendProfile = (
   });
 };
 
-export const create = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
-    const profile = await profileService.createProfile(
-      getUserId(req),
-      req.body,
-    );
-    sendProfile(res, 201, "Developer profile created", profile);
-  } catch (error) {
-    next(error);
-  }
-};
+// export const create = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction,
+// ): Promise<void> => {
+//   try {
+//     const profile = await profileService.createProfile(
+//       getUserId(req),
+//       req.body,
+//     );
+//     sendProfile(res, 201, "Developer profile created", profile);
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
-export const me = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
-    const profile = await profileService.getMyProfile(getUserId(req));
-    sendProfile(res, 200, "Developer profile retrieved", profile);
-  } catch (error) {
-    next(error);
-  }
-};
+// export const me = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction,
+// ): Promise<void> => {
+//   try {
+//     const profile = await profileService.getMyProfile(getUserId(req));
+//     sendProfile(res, 200, "Developer profile retrieved", profile);
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
-export const publicProfile = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
-    const { id } = profileIdSchema.parse({ id: req.params.userId });
-    const profile = await profileService.getPublicProfile(id);
-    sendProfile(res, 200, "Developer profile retrieved", profile);
-  } catch (error) {
-    next(error);
-  }
-};
+// export const publicProfile = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction,
+// ): Promise<void> => {
+//   try {
+//     const { id } = profileIdSchema.parse({ id: req.params.userId });
+//     const profile = await profileService.getPublicProfile(id);
+//     sendProfile(res, 200, "Developer profile retrieved", profile);
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 export const introduction = async (
   req: Request,
@@ -115,17 +115,50 @@ export const skills = async (
   }
 };
 
-export const socialLinks = async (
+
+export const addSocialLink = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const profile = await profileService.updateSocialLinks(
+    const profile = await profileService.addSocialLink(
       getUserId(req),
-      req.body.socialLinks,
+      req.body,
     );
-    sendProfile(res, 200, "Social links updated", profile);
+    sendProfile(res, 201, "Social link added", profile);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateSocialLink = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { id } = profileIdSchema.parse({ id: req.params.socialLinkId });
+    const profile = await profileService.updateSocialLink(
+      getUserId(req),
+      id,
+      req.body,
+    );
+    sendProfile(res, 200, "Social link updated", profile);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteSocialLink = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { id } = profileIdSchema.parse({ id: req.params.socialLinkId });
+    const profile = await profileService.deleteSocialLink(getUserId(req), id);
+    sendProfile(res, 200, "Social link deleted", profile);
   } catch (error) {
     next(error);
   }

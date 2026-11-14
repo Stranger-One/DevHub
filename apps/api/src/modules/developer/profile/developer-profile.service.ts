@@ -2,7 +2,7 @@ import { Types } from "mongoose";
 import { ApiError } from "../../../errors/api-error.js";
 import { ErrorCode } from "../../../errors/error-code.js";
 import { UserModel } from "../../users/user.model.js";
-import { DeveloperProfileModel } from "./developer-profile.model.js";
+import { DeveloperProfile, DeveloperProfileModel } from "./developer-profile.model.js";
 import type {
   AboutInput,
   CertificationInput,
@@ -36,7 +36,7 @@ const ensureProfile = async (userId: string): Promise<void> => {
   );
 };
 
-const completionPercentage = (profile: CreateProfileInput): number => {
+const completionPercentage = (profile: DeveloperProfile): number => {
   const sections = [
     Boolean(profile.introduction),
     Boolean(profile.about?.description || profile.about?.specialties?.length),
@@ -49,39 +49,6 @@ const completionPercentage = (profile: CreateProfileInput): number => {
   return Math.round((sections.filter(Boolean).length / sections.length) * 100);
 };
 
-export const createProfile = async (
-  userId: string,
-  input: CreateProfileInput,
-) => {
-  await assertDeveloper(userId);
-  if (await DeveloperProfileModel.exists({ userId })) {
-    throw new ApiError("Developer profile already exists", 409, {
-      code: ErrorCode.RESOURCE_CONFLICT,
-    });
-  }
-  return DeveloperProfileModel.create({
-    ...input,
-    userId,
-    completionPercentage: completionPercentage(input),
-  });
-};
-
-export const getMyProfile = async (userId: string) => {
-  await assertDeveloper(userId);
-  const profile = await DeveloperProfileModel.findOne({ userId });
-  if (!profile) throw notFound();
-  return profile;
-};
-
-export const getPublicProfile = async (userId: string) => {
-  if (!Types.ObjectId.isValid(userId)) throw notFound();
-  const profile = await DeveloperProfileModel.findOne({ userId }).populate(
-    "userId",
-    "username",
-  );
-  if (!profile) throw notFound();
-  return profile;
-};
 
 const updateProfile = async (
   userId: string,
@@ -93,9 +60,11 @@ const updateProfile = async (
   const profile = await DeveloperProfileModel.findOneAndUpdate(
     { userId },
     { $set: update },
-    { returnDocument: 'after', runValidators: true },
+    { returnDocument: "after", runValidators: true },
   );
   if (!profile) throw notFound();
+  profile.completionPercentage = completionPercentage(profile.toObject());
+  await profile.save();
   return profile;
 };
 
@@ -118,10 +87,7 @@ export const updateAbout = (userId: string, input: AboutInput) =>
   );
 export const updateSkills = (userId: string, skills: string[]) =>
   updateProfile(userId, { skills });
-export const updateSocialLinks = (
-  userId: string,
-  socialLinks: SocialLinkInput[],
-) => updateProfile(userId, { socialLinks });
+
 
 const addSection = async (
   userId: string,
@@ -132,15 +98,17 @@ const addSection = async (
   const profile = await DeveloperProfileModel.findOneAndUpdate(
     { userId },
     { $push: { [section]: input } },
-    { returnDocument: 'after', runValidators: true },
+    { returnDocument: "after", runValidators: true },
   );
   if (!profile) throw notFound();
+  profile.completionPercentage = completionPercentage(profile.toObject());
+  await profile.save();
   return profile;
 };
 
 const updateSection = async (
   userId: string,
-  section: "education" | "experience" | "certifications",
+  section: "education" | "experience" | "certifications" | "socialLinks",
   itemId: string,
   input: Record<string, unknown>,
 ) => {
@@ -155,9 +123,11 @@ const updateSection = async (
         ]),
       ),
     },
-    { returnDocument: 'after', runValidators: true },
+    { returnDocument: "after", runValidators: true },
   );
   if (!profile) throw notFound();
+  profile.completionPercentage = completionPercentage(profile.toObject());
+  await profile.save();
   return profile;
 };
 
@@ -169,9 +139,11 @@ const deleteSection = async (
   const profile = await DeveloperProfileModel.findOneAndUpdate(
     { userId, [`${section}._id`]: itemId },
     { $pull: { [section]: { _id: itemId } } },
-    { returnDocument: 'after' },
+    { returnDocument: "after" },
   );
   if (!profile) throw notFound();
+  profile.completionPercentage = completionPercentage(profile.toObject());
+  await profile.save();
   return profile;
 };
 
@@ -202,3 +174,13 @@ export const updateCertification = (
 ) => updateSection(userId, "certifications", id, input);
 export const deleteCertification = (userId: string, id: string) =>
   deleteSection(userId, "certifications", id);
+
+export const addSocialLink = (userId: string, input: SocialLinkInput) =>
+  addSection(userId, "socialLinks", input);
+export const updateSocialLink = (
+  userId: string,
+  id: string,
+  input: Partial<SocialLinkInput>,
+) => updateSection(userId, "socialLinks", id, input);
+export const deleteSocialLink = (userId: string, id: string) =>
+  deleteSection(userId, "socialLinks", id);

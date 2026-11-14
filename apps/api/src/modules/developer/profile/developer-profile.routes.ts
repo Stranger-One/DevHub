@@ -9,21 +9,23 @@ import {
   educationSchema,
   experienceSchema,
   introductionSchema,
+  socialLinkSchema,
   updateCertificationSchema,
   updateEducationSchema,
   updateExperienceSchema,
+  updateSocialLinkSchema,
   updateSkillsSchema,
   updateSocialLinksSchema,
 } from "./developer-profile.validation.js";
 
 const router: Router = Router();
 
-router.get("/me", authenticate, controller.me);
-router.get("/:userId", controller.publicProfile);
+// router.get("/me", authenticate, controller.me);
+// router.get("/:userId", controller.publicProfile);
 
 router.use(authenticate);
 
-router.post("/", validate(createProfileSchema), controller.create);
+// router.post("/", validate(createProfileSchema), controller.create);
 
 // PATCH routes for updating profile sections
 router.patch(
@@ -33,13 +35,20 @@ router.patch(
 );
 router.patch("/about", validate(aboutSchema), controller.about);
 router.patch("/skills", validate(updateSkillsSchema), controller.skills);
-router.patch(
-  "/social-links",
-  validate(updateSocialLinksSchema),
-  controller.socialLinks,
-);
 
-// Education 
+router.post(
+  "/social-links",
+  validate(socialLinkSchema),
+  controller.addSocialLink,
+);
+router.patch(
+  "/social-links/:socialLinkId",
+  validate(updateSocialLinkSchema),
+  controller.updateSocialLink,
+);
+router.delete("/social-links/:socialLinkId", controller.deleteSocialLink);
+
+// Education
 router.post("/education", validate(educationSchema), controller.addEducation);
 router.patch(
   "/education/:educationId",
@@ -47,7 +56,6 @@ router.patch(
   controller.updateEducation,
 );
 router.delete("/education/:educationId", controller.deleteEducation);
-
 
 // Experience
 router.post(

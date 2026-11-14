@@ -4,7 +4,7 @@ import { ProfileImageUploader } from "./ProfileImageUploader";
 import type { ProfileIntroduction } from "./profile.types";
 
 type IntroductionEditorProps = {
-  profile: ProfileIntroduction;
+  profile: ProfileIntroduction | undefined;
   open: boolean;
   onClose: () => void;
   onSave: (input: Partial<ProfileIntroduction>) => void;
@@ -25,8 +25,8 @@ export function IntroductionEditor({
   onSave,
 }: IntroductionEditorProps) {
   const [images, setImages] = useState({
-    profile: profile.profilePicture,
-    cover: profile.coverImage,
+    profile: profile?.profilePicture,
+    cover: profile?.coverImage,
   });
   const [disableSubmit, setDisableSubmit] = useState(false)
 
@@ -34,21 +34,21 @@ export function IntroductionEditor({
     {
       name: "firstName",
       label: "First name",
-      value: profile.firstName,
+      value: profile?.firstName,
       required: true,
       span: 1,
     },
     {
       name: "lastName",
       label: "Last name",
-      value: profile.lastName,
+      value: profile?.lastName,
       required: true,
       span: 1,
     },
     {
       name: "pronouns",
       label: "Pronouns",
-      value: profile.pronouns,
+      value: profile?.pronouns,
       type: "select",
       options,
       span: 1,
@@ -56,7 +56,7 @@ export function IntroductionEditor({
     {
       name: "headline",
       label: "Headline",
-      value: profile.headline,
+      value: profile?.headline,
       required: true,
       multiline: true,
       span: 3,
@@ -64,20 +64,20 @@ export function IntroductionEditor({
     {
       name: "country",
       label: "Country",
-      value: profile.location.country,
+      value: profile?.location.country,
       span: 1,
     },
     {
       name: "state",
       label: "State / province",
-      value: profile.location.state,
+      value: profile?.location.state,
       span: 1,
     },
-    { name: "city", label: "City", value: profile.location.city, span: 1 },
+    { name: "city", label: "City", value: profile?.location.city, span: 1 },
     {
       name: "postalCode",
       label: "Postal code",
-      value: profile.location.postalCode ?? "",
+      value: profile?.location.postalCode ?? "",
       span: 1,
     },
   ];
@@ -110,7 +110,7 @@ export function IntroductionEditor({
       <div className="col-span-full grid gap-3 sm:grid-cols-2">
         <ProfileImageUploader
           label="Profile image"
-          value={profile.profilePicture.url}
+          value={profile?.profilePicture.url}
           circular
           onChange={(url, publicId) =>
             setImages((current) => ({ ...current, profile: { url, publicId } }))
@@ -119,7 +119,7 @@ export function IntroductionEditor({
         />
         <ProfileImageUploader
           label="Cover image"
-          value={profile.coverImage.url}
+          value={profile?.coverImage.url}
           onChange={(url, publicId) =>
             setImages((current) => ({ ...current, cover: { url, publicId } }))
           }

@@ -18,6 +18,9 @@ import { ExperienceEditor } from "../../components/profile/ExperienceEditor";
 import { IntroductionEditor } from "../../components/profile/IntroductionEditor";
 import { ProfileSection } from "../../components/profile/ProfileSection";
 import { SkillsEditor } from "../../components/profile/SkillsEditor";
+import { SocialLinkEditor } from "../../components/profile/SocialLinkEditor";
+import { ProfileEmptyState } from "../../components/profile/ProfileEmptyState";
+import type { ProfileIntroduction } from "../../components/profile/profile.types";
 import {
   selectProfile,
   selectProfileError,
@@ -27,21 +30,27 @@ import {
   addCertification,
   addEducation,
   addExperience,
+  addSocialLink,
   deleteCertification,
   deleteEducation,
   deleteExperience,
+  deleteSocialLink,
   fetchProfile,
   updateAbout,
   updateCertification,
   updateEducation,
   updateExperience,
   updateIntroduction,
+  updateSocialLink,
   updateSkills,
 } from "../../features/profile/profileThunk";
 
 type EditorState =
   | { type: "introduction" | "about" | "skills" }
-  | { type: "education" | "experience" | "certification"; itemId?: string };
+  | {
+      type: "education" | "experience" | "certification" | "socialLink";
+      itemId?: string;
+    };
 
 const dateLabel = (date?: string) =>
   date
@@ -55,6 +64,38 @@ const years = (start?: string, end?: string, current?: boolean) =>
   start
     ? `${new Date(start).getFullYear()} - ${current ? "Present" : end ? new Date(end).getFullYear() : ""}`
     : "";
+
+const emptyIntroduction: ProfileIntroduction = {
+  firstName: "",
+  lastName: "",
+  pronouns: "",
+  headline: "",
+  profilePicture: { url: "", publicId: "" },
+  coverImage: { url: "", publicId: "" },
+  location: {
+    country: "",
+    state: "",
+    city: "",
+    postalCode: "",
+  },
+};
+
+const EmptySection = ({
+  sectionName,
+  isOwner,
+}: {
+  sectionName: string;
+  isOwner: boolean;
+}) => (
+  <div className="w-full flex flex-col items-center justify-center py-5">
+    <span className="">No {sectionName} added yet</span>
+    {isOwner && (
+      <p className=" text-sm  text-text-secondary capitalize text-center">
+        Add Your {sectionName} to Improve Your Profile Strength
+      </p>
+    )}
+  </div>
+);
 
 export default function ProfilePage() {
   const { id } = useParams();
@@ -83,25 +124,28 @@ export default function ProfilePage() {
     return <LoadingScreen label="Loading profile..." />;
   if (!profile)
     return (
-      <div className="mx-auto max-w-xl rounded-2xl border border-error/30 bg-surface p-8 text-center">
-        <h1 className="text-xl font-semibold">Unable to load profile</h1>
-        <p className="mt-2 text-sm text-text-secondary">
-          {error ?? "The requested developer profile is unavailable."}
-        </p>
-        <button
-          type="button"
-          onClick={() => {
+      <>
+        <ProfileEmptyState
+          isOwner={isOwner}
+          error={error}
+          onCreate={() => setEditor({ type: "introduction" })}
+          onRetry={() => {
             if (id) void dispatch(fetchProfile(id));
           }}
-          className="mt-5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white"
-        >
-          Try again
-        </button>
-      </div>
+        />
+        {isOwner && editor?.type === "introduction" && (
+          <IntroductionEditor
+            profile={emptyIntroduction}
+            open
+            onClose={() => setEditor(null)}
+            onSave={(input) => void dispatch(updateIntroduction(input))}
+          />
+        )}
+      </>
     );
 
   const fullName =
-    `${profile.introduction.firstName} ${profile.introduction.lastName}`.trim();
+    `${profile?.introduction.firstName} ${profile?.introduction.lastName}`.trim();
   const initials = fullName
     .split(" ")
     .filter(Boolean)
@@ -199,19 +243,25 @@ export default function ProfilePage() {
             title="About"
             onEdit={isOwner ? () => openEditor("about") : undefined}
           >
-            <p className="text-sm leading-7 text-text-secondary">
-              {profile.about.description}
-            </p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              {profile.about.specialties.map((specialty) => (
-                <span
-                  key={specialty}
-                  className="rounded-full border border-border-strong bg-primary-soft px-3 py-1.5 text-xs font-medium text-accent-purple"
-                >
-                  {specialty}
-                </span>
-              ))}
-            </div>
+            {profile.about.description ? (
+              <>
+                <p className="text-sm leading-7 text-text-secondary">
+                  {profile.about.description}
+                </p>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {profile.about.specialties.map((specialty) => (
+                    <span
+                      key={specialty}
+                      className="rounded-full border border-border-strong bg-primary-soft px-3 py-1.5 text-xs font-medium text-accent-purple"
+                    >
+                      {specialty}
+                    </span>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <EmptySection sectionName="about" isOwner={isOwner} />
+            )}
           </ProfileSection>
 
           {/* Skills Section */}
@@ -220,14 +270,18 @@ export default function ProfilePage() {
             onEdit={isOwner ? () => openEditor("skills") : undefined}
           >
             <div className="flex flex-wrap gap-2">
-              {profile.skills.map((skill) => (
-                <span
-                  key={skill}
-                  className="rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text-secondary"
-                >
-                  {skill}
-                </span>
-              ))}
+              {profile.skills.length > 0 ? (
+                profile.skills.map((skill) => (
+                  <span
+                    key={skill}
+                    className="rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text-secondary"
+                  >
+                    {skill}
+                  </span>
+                ))
+              ) : (
+                <EmptySection sectionName="skills" isOwner={isOwner} />
+              )}
             </div>
           </ProfileSection>
 
@@ -237,64 +291,71 @@ export default function ProfilePage() {
             eyebrow={`${profile.experience.length} roles`}
             onAdd={isOwner ? () => openEditor("experience") : undefined}
           >
-            {profile.experience.map((item) => (
-              <article
-                key={item._id}
-                className="border-b border-border pb-5 pt-1 last:border-0 last:pb-0"
-              >
-                <div className="flex gap-4">
-                  <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-surface-purple text-sm font-bold text-accent-purple">
-                    {item.company.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-text-primary">
-                      {item.position}
-                    </h3>
-                    <p className="mt-1 text-sm text-text-secondary">
-                      {item.company} · {item.employmentType}
-                    </p>
-                    <p className="mt-1 text-xs text-text-muted">
-                      {years(
-                        item.startDate,
-                        item.endDate,
-                        item.currentlyWorking,
-                      )}{" "}
-                      · {item.location} · {item.workingType}
-                    </p>
-                    <p className="mt-3 text-sm leading-6 text-text-secondary">
-                      {item.description}
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {item.skills.map((skill) => (
-                        <span key={skill} className="text-xs text-accent-cyan">
-                          {skill}
-                        </span>
-                      ))}
+            {profile.experience.length > 0 ? (
+              profile.experience.map((item) => (
+                <article
+                  key={item._id}
+                  className="border-b border-border pb-5 pt-1 last:border-0 last:pb-0"
+                >
+                  <div className="flex gap-4">
+                    <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-surface-purple text-sm font-bold text-accent-purple">
+                      {item.company.slice(0, 2).toUpperCase()}
                     </div>
-                  </div>
-                  {isOwner && (
-                    <div className="mt-3 flex gap-3 items-start">
-                      <button
-                        type="button"
-                        onClick={() => openEditor("experience", item._id)}
-                        className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-accent-cyan"
-                      >
-                        <Pencil size={18} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void dispatch(deleteExperience(item._id))
-                        }
-                        className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-error"
-                      >
-                        <Trash2 size={18} />
-                      </button>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-text-primary">
+                        {item.position}
+                      </h3>
+                      <p className="mt-1 text-sm text-text-secondary">
+                        {item.company} · {item.employmentType}
+                      </p>
+                      <p className="mt-1 text-xs text-text-muted">
+                        {years(
+                          item.startDate,
+                          item.endDate,
+                          item.currentlyWorking,
+                        )}{" "}
+                        · {item.location} · {item.workingType}
+                      </p>
+                      <p className="mt-3 text-sm leading-6 text-text-secondary">
+                        {item.description}
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {item.skills.map((skill) => (
+                          <span
+                            key={skill}
+                            className="text-xs text-accent-cyan"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  )}
-                </div>
-              </article>
-            ))}
+                    {isOwner && (
+                      <div className="mt-3 flex gap-3 items-start">
+                        <button
+                          type="button"
+                          onClick={() => openEditor("experience", item._id)}
+                          className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-accent-cyan"
+                        >
+                          <Pencil size={18} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void dispatch(deleteExperience(item._id))
+                          }
+                          className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-error"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </article>
+              ))
+            ) : (
+              <EmptySection sectionName="experiences" isOwner={isOwner} />
+            )}
           </ProfileSection>
 
           {/* Education Section */}
@@ -303,54 +364,58 @@ export default function ProfilePage() {
             eyebrow={`${profile.education.length} schools`}
             onAdd={isOwner ? () => openEditor("education") : undefined}
           >
-            {profile.education.map((item) => (
-              <article
-                key={item._id}
-                className="flex gap-4 border-b border-border pb-5 pt-1 last:border-0 last:pb-0"
-              >
-                <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-surface-purple text-accent-cyan">
-                  {item.institution.slice(0, 1)}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-text-primary">
-                    {item.institution}
-                  </h3>
-                  <p className="mt-1 text-sm text-text-secondary">
-                    {item.degree}, {item.fieldOfStudy}
-                  </p>
-                  <p className="mt-1 text-xs text-text-muted">
-                    {years(
-                      item.startDate,
-                      item.endDate,
-                      item.currentlyStudying,
-                    )}
-                  </p>
-                  {item.description && (
-                    <p className="mt-3 text-sm leading-6 text-text-secondary">
-                      {item.description}
-                    </p>
-                  )}
-                </div>
-                {isOwner && (
-                  <div className="mt-3 flex gap-3 items-start">
-                    <button
-                      type="button"
-                      onClick={() => openEditor("education", item._id)}
-                      className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-accent-cyan"
-                    >
-                      <Pencil size={18} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void dispatch(deleteEducation(item._id))}
-                      className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-error"
-                    >
-                      <Trash2 size={18} />
-                    </button>
+            {profile.education.length > 0 ? (
+              profile.education.map((item) => (
+                <article
+                  key={item._id}
+                  className="flex gap-4 border-b border-border pb-5 pt-1 last:border-0 last:pb-0"
+                >
+                  <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-surface-purple text-accent-cyan">
+                    {item.institution.slice(0, 1)}
                   </div>
-                )}
-              </article>
-            ))}
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-text-primary">
+                      {item.institution}
+                    </h3>
+                    <p className="mt-1 text-sm text-text-secondary">
+                      {item.degree}, {item.fieldOfStudy}
+                    </p>
+                    <p className="mt-1 text-xs text-text-muted">
+                      {years(
+                        item.startDate,
+                        item.endDate,
+                        item.currentlyStudying,
+                      )}
+                    </p>
+                    {item.description && (
+                      <p className="mt-3 text-sm leading-6 text-text-secondary">
+                        {item.description}
+                      </p>
+                    )}
+                  </div>
+                  {isOwner && (
+                    <div className="mt-3 flex gap-3 items-start">
+                      <button
+                        type="button"
+                        onClick={() => openEditor("education", item._id)}
+                        className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-accent-cyan"
+                      >
+                        <Pencil size={18} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void dispatch(deleteEducation(item._id))}
+                        className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-error"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  )}
+                </article>
+              ))
+            ) : (
+              <EmptySection sectionName="education" isOwner={isOwner} />
+            )}
           </ProfileSection>
 
           {/* Certifications Section */}
@@ -358,66 +423,71 @@ export default function ProfilePage() {
             title="Licenses & certifications"
             onAdd={isOwner ? () => openEditor("certification") : undefined}
           >
-            {profile.certifications.map((item) => (
-              <article
-                key={item._id}
-                className="flex gap-4 border-b border-border pb-5 pt-1 last:border-0 last:pb-0"
-              >
-                <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary text-sm font-bold text-white">
-                  ✓
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-text-primary">
-                    {item.name}
-                  </h3>
-                  <p className="mt-1 text-sm text-text-secondary">
-                    {item.issuingOrganization}
-                  </p>
-                  <p className="mt-1 text-xs text-text-muted">
-                    Issued {dateLabel(item.issueDate)} · {item.credentialId}
-                  </p>
-                  {item.expirationDate && !item.doesNotExpire && (
-                    <p className="mt-1 text-xs text-text-muted">
-                      Expires {dateLabel(item.expirationDate)}
-                    </p>
-                  )}
-                  {item.credentialUrl && (
-                    <a
-                      href={item.credentialUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-accent-cyan"
-                    >
-                      Show credential <ExternalLink size={13} />
-                    </a>
-                  )}
-                </div>
-                {isOwner && (
-                  <div className="mt-3 flex gap-3 items-start">
-                    <button
-                      type="button"
-                      onClick={() => openEditor("certification", item._id)}
-                      className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-accent-cyan"
-                    >
-                      <Pencil size={18} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        void dispatch(deleteCertification(item._id))
-                      }
-                      className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-error"
-                    >
-                      <Trash2 size={18} />
-                    </button>
+            {profile.certifications.length > 0 ? (
+              profile.certifications.map((item) => (
+                <article
+                  key={item._id}
+                  className="flex gap-4 border-b border-border pb-5 pt-1 last:border-0 last:pb-0"
+                >
+                  <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary text-sm font-bold text-white">
+                    ✓
                   </div>
-                )}
-              </article>
-            ))}
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-text-primary">
+                      {item.name}
+                    </h3>
+                    <p className="mt-1 text-sm text-text-secondary">
+                      {item.issuingOrganization}
+                    </p>
+                    <p className="mt-1 text-xs text-text-muted">
+                      Issued {dateLabel(item.issueDate)} · {item.credentialId}
+                    </p>
+                    {item.expirationDate && !item.doesNotExpire && (
+                      <p className="mt-1 text-xs text-text-muted">
+                        Expires {dateLabel(item.expirationDate)}
+                      </p>
+                    )}
+                    {item.credentialUrl && (
+                      <a
+                        href={item.credentialUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-accent-cyan"
+                      >
+                        Show credential <ExternalLink size={13} />
+                      </a>
+                    )}
+                  </div>
+                  {isOwner && (
+                    <div className="mt-3 flex gap-3 items-start">
+                      <button
+                        type="button"
+                        onClick={() => openEditor("certification", item._id)}
+                        className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-accent-cyan"
+                      >
+                        <Pencil size={18} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void dispatch(deleteCertification(item._id))
+                        }
+                        className="inline-flex items-center gap-1 p-2 rounded-full hover:bg-surface-hover cursor-pointer text-xs font-semibold text-error"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  )}
+                </article>
+              ))
+            ) : (
+              <EmptySection sectionName="certifications" isOwner={isOwner} />
+            )}
           </ProfileSection>
         </main>
 
-        <aside className="sticky top-0 h-fit self-start space-y-5">
+        <aside className="sticky bottom-10 h-fit self-end space-y-5">
+          {/* Completion Section */}
           {isOwner && (
             <ProfileSection title="Profile strength">
               <div className="flex items-center justify-between text-sm">
@@ -434,37 +504,78 @@ export default function ProfilePage() {
               </div>
             </ProfileSection>
           )}
-          <ProfileSection title="Contact & links">
+
+          <ProfileSection title="Location">
+            <div className="h-100 "></div>
+          </ProfileSection>
+
+          {/* Social Links Section */}
+          <ProfileSection
+            title="Contact & links"
+            onAdd={isOwner ? () => openEditor("socialLink") : undefined}
+          >
             <div className="space-y-3">
-              {profile.socialLinks.map((link) => (
-                <a
-                  key={link._id}
-                  href={link.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-3 rounded-xl border border-border p-3 hover:border-border-strong hover:bg-surface-hover"
-                >
-                  <span className="grid size-8 place-items-center rounded-lg bg-surface-purple text-accent-purple">
-                    {link.platform === "GitHub" ? (
-                      <Code2 size={16} />
-                    ) : (
-                      <Globe2 size={16} />
+              {profile.socialLinks.length > 0 ? (
+                profile.socialLinks.map((link) => (
+                  <div
+                    key={link._id}
+                    className="flex items-center gap-2 rounded-xl border border-border p-3 hover:border-border-strong hover:bg-surface-hover"
+                  >
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex min-w-0 flex-1 items-center gap-3"
+                    >
+                      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-surface-purple text-accent-purple">
+                        {link.platform.toLowerCase() === "github" ? (
+                          <Code2 size={16} />
+                        ) : (
+                          <Globe2 size={16} />
+                        )}
+                      </span>
+                      <span className="min-w-0">
+                        <strong className="block truncate text-sm text-text-primary">
+                          {link.platform}
+                        </strong>
+                        {link.label && (
+                          <span className="block truncate text-xs text-text-muted">
+                            {link.label}
+                          </span>
+                        )}
+                      </span>
+                      <ExternalLink
+                        size={14}
+                        className="ml-auto shrink-0 text-text-muted"
+                      />
+                    </a>
+                    {isOwner && (
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => openEditor("socialLink", link._id)}
+                          aria-label={`Edit ${link.platform} link`}
+                          className="grid size-8 place-items-center rounded-lg text-text-muted hover:bg-surface-hover hover:text-accent-cyan"
+                        >
+                          <Pencil size={15} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void dispatch(deleteSocialLink(link._id))
+                          }
+                          aria-label={`Delete ${link.platform} link`}
+                          className="grid size-8 place-items-center rounded-lg text-text-muted hover:bg-error/10 hover:text-error"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
                     )}
-                  </span>
-                  <span className="min-w-0">
-                    <strong className="block truncate text-sm text-text-primary">
-                      {link.platform}
-                    </strong>
-                    <span className="block truncate text-xs text-text-muted">
-                      {link.label}
-                    </span>
-                  </span>
-                  <ExternalLink
-                    size={14}
-                    className="ml-auto shrink-0 text-text-muted"
-                  />
-                </a>
-              ))}
+                  </div>
+                ))
+              ) : (
+                <EmptySection sectionName="social links" isOwner={isOwner} />
+              )}
             </div>
           </ProfileSection>
         </aside>
@@ -473,7 +584,7 @@ export default function ProfilePage() {
       {/* INTRODUCTION EDITOR */}
       {editor?.type === "introduction" && (
         <IntroductionEditor
-          profile={profile.introduction}
+          profile={profile?.introduction}
           open
           onClose={() => setEditor(null)}
           onSave={(input) => void dispatch(updateIntroduction(input))}
@@ -483,7 +594,7 @@ export default function ProfilePage() {
       {/* ABOUT EDITOR */}
       {editor?.type === "about" && (
         <AboutEditor
-          value={profile.about}
+          value={profile?.about}
           open
           onClose={() => setEditor(null)}
           onSave={(input) => void dispatch(updateAbout(input))}
@@ -493,17 +604,35 @@ export default function ProfilePage() {
       {/* SKILLS EDITOR */}
       {editor?.type === "skills" && (
         <SkillsEditor
-          value={profile.skills}
+          value={profile?.skills}
           open
           onClose={() => setEditor(null)}
           onSave={(skills) => void dispatch(updateSkills(skills))}
         />
       )}
 
+      {/* SOCIAL LINK EDITOR */}
+      {editor?.type === "socialLink" && (
+        <SocialLinkEditor
+          value={profile?.socialLinks.find(
+            (link) => link._id === editor.itemId,
+          )}
+          open
+          onClose={() => setEditor(null)}
+          onSave={(input) => {
+            if (editor.itemId) {
+              void dispatch(updateSocialLink({ id: editor.itemId, input }));
+            } else {
+              void dispatch(addSocialLink(input));
+            }
+          }}
+        />
+      )}
+
       {/* EDUCATION EDITOR */}
       {editor?.type === "education" && (
         <EducationEditor
-          value={profile.education.find((item) => item._id === editor.itemId)}
+          value={profile?.education.find((item) => item._id === editor.itemId)}
           open
           onClose={() => setEditor(null)}
           onSave={(input) => {
@@ -519,7 +648,7 @@ export default function ProfilePage() {
       {/* EXPERIENCE EDITOR */}
       {editor?.type === "experience" && (
         <ExperienceEditor
-          value={profile.experience.find((item) => item._id === editor.itemId)}
+          value={profile?.experience.find((item) => item._id === editor.itemId)}
           open
           onClose={() => setEditor(null)}
           onSave={(input) => {
@@ -535,7 +664,7 @@ export default function ProfilePage() {
       {/* CERTIFICATION EDITOR */}
       {editor?.type === "certification" && (
         <CertificationEditor
-          value={profile.certifications.find(
+          value={profile?.certifications.find(
             (item) => item._id === editor.itemId,
           )}
           open

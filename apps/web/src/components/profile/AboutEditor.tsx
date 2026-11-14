@@ -1,7 +1,7 @@
 import { ProfileDialog, type ProfileField } from "./ProfileDialog";
 
 type AboutEditorProps = {
-  value: { description: string; specialties: string[] };
+  value: { description: string; specialties: string[] } | undefined;
   open: boolean;
   onClose: () => void;
   onSave: (input: { description: string; specialties: string[] }) => void;
@@ -17,7 +17,7 @@ export function AboutEditor({
     {
       name: "description",
       label: "Description",
-      value: value.description,
+      value: value?.description,
       required: true,
       multiline: true,
       span: 3,
@@ -25,7 +25,7 @@ export function AboutEditor({
     {
       name: "specialties",
       label: "Specialties (comma separated)",
-      value: value.specialties.join(", "),
+      value: value?.specialties.join(", "),
       span: 3,
     },
   ];
